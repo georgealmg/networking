@@ -135,9 +135,8 @@ def IOS(sw_i,user,pas,sw_out,fp,sw_lenovo):
             sw_out.append(sw_i)
 
 def main():
-    #windowsuser = os.getlogin()
-    #os.chdir("C:/Users/"+str(windowsuser)+"/Documents")
-    os.chdir("C:/Users/Administrador/Documents")
+    windowsuser = os.getlogin()
+    os.chdir("C:/Users/"+str(windowsuser)+"/Documents")
     user = input("Username: ")
     pas = getpass.getpass()
     sw_nx = []

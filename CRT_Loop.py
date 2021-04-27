@@ -22,7 +22,7 @@ def loop():
 for i in SW:
     #fp = open(i+".txt", "w+")
     #Telnet
-    if i == '1.1.1.1'
+    if i == '1.1.1.1':
         crt.Screen.Send("telnet %s \r" % i)
         crt.Screen.WaitForString("sername:")
         crt.Screen.Send("%s\r" % user)
@@ -35,7 +35,7 @@ for i in SW:
         crt.Screen.Send("exit\r")
         crt.Sleep(500)
     #SSH
-    elif i != '1.1.1.1'
+    elif i != '1.1.1.1':
         crt.Screen.Send("ssh -l %s %s\r" % (user, i))
         crt.Screen.Send("%s\r" % passwd)
         crt.Screen.Synchronous = True

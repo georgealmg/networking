@@ -54,7 +54,7 @@ def main():
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
     print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se validara un total de {str(total_sw)} switch.")
     
-    #Funcion que permit ipen la ejecucion de las configuraciones por medio de 4 procesos asincronos.
+    #Funcion que permite la ejecucion de las configuraciones por medio de procesos asincronos.
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor_nx:
         ejecucion_nx = {executor_nx.submit(NXOS,sw_n,user,pas,fp,fp1,fp2,comandos_nx,segmentos): sw_n for sw_n in sw_nx}
     for output_nx in concurrent.futures.as_completed(ejecucion_nx):
