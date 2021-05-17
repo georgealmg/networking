@@ -38,7 +38,7 @@ def main():
     sw_dc = []
     sw_out = []
     fp = open("sw_out.txt","+w")
-    archivo_excel = openpyxl.load_workbook("Respaldos-BCH.xlsx")
+    archivo_excel = openpyxl.load_workbook("Respaldos.xlsx")
     pestaña_excel = archivo_excel["IP"]
     for ip in range(2, 999999):
         valor = pestaña_excel.cell(row=ip, column=1).value
