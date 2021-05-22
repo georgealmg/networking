@@ -1,4 +1,7 @@
-import os, concurrent.futures, openpyxl
+#!/usr/bin/env python3
+#v1.0.0
+
+import os, concurrent.futures, openpyxl, sys
 from datetime import datetime
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetMikoTimeoutException, SSHException, AuthenticationException
@@ -9,18 +12,17 @@ def DC(sw,user,pas,sw_out):
         respaldos_txt = open(hostname.strip("#")+".txt","+w")
         respaldos_txt.write(net_connect.send_command("show running-config"))
         respaldos_txt.close()
-        print(f"Ejecucion finalizada en {hostname}.")
         try:
             net_connect.save_config()
         except(OSError):
             net_connect.save_config(confirm=True,confirm_response="yes\r")
         net_connect.disconnect()
+        print(f"Ejecucion finalizada en {hostname}.")
     try:
         net_connect = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
         respaldos_DC(net_connect)
     except(AuthenticationException):
-        print(f"Error de autenticacion en IP: {sw}.")
-        sw_out.append(sw)
+        sys.exit("Por favor ejecute nuevamente el programa ya que introdujo una contraseña erronea.")
     except(NetMikoTimeoutException,SSHException):
         try:
             net_connect = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas, fast_cli= False)

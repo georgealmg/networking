@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+#v1.0.0
+
 import os, getpass, sys, re
 from datetime import datetime
 from netmiko import ConnectHandler
