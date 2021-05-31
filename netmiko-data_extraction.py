@@ -254,6 +254,9 @@ _= ws1.cell(column=7, row=1, value= "Velocidad (Mbps)")
 _= ws1.cell(column=8, row=1, value= "Duplex")
 _= ws1.cell(column=9, row=1, value= "Access o Trunk")
 _= ws1.cell(column=10, row=1, value= "Description")
+_= ws1.cell(column=11, row=1, value= "Estado de interfaz")
+_= ws1.cell(column=12, row=1, value= "Port-channel")
+_= ws1.cell(column=13, row=1, value= "SFP")
 row_value = 2
 iterator = 0
 while iterator <= (len(list_of_int) - 1):
@@ -267,6 +270,9 @@ while iterator <= (len(list_of_int) - 1):
     _= ws1.cell(column=8, row=row_value, value=list_of_duplex[iterator])
     _= ws1.cell(column=9, row=row_value, value=list_of_modes[iterator])
     _= ws1.cell(column=10, row=row_value, value=str(list_of_description[iterator]))
+    _= ws1.cell(column=11, row=row_value, value=str(list_of_states[iterator]))
+    _= ws1.cell(column=12, row=row_value, value=list_of_channel[iterator])
+    _= ws1.cell(column=13, row=row_value, value=list_of_sfp[iterator])
     iterator+=1
     row_value+=1
 wb.save(filename = dest_filename)
