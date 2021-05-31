@@ -1,8 +1,10 @@
-import os, getpass, openpyxl, sys, re, concurrent.futures
+#!/usr/bin/env python3
+#v1.0.0
+
+import os, getpass, sys, re, concurrent.futures, openpyxl
 from datetime import datetime
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetMikoTimeoutException, SSHException, AuthenticationException
-from openpyxl import load_workbook, workbook
 
 def NXOS(sw_n,user,pas,sw_out,fp):
     def puertas_NXOS(net_connect):
@@ -35,7 +37,7 @@ def NXOS(sw_n,user,pas,sw_out,fp):
         net_connect = ConnectHandler(device_type= "cisco_nxos_ssh",host= sw_n,username= user,password= pas)
         puertas_NXOS(net_connect)
     except(AuthenticationException):
-        print(f"Error de autenticacion en IP: {sw_n}.")
+        sys.exit("Por favor ejecute nuevamente el programa ya que introdujo una contraseña erronea.")
     except(NetMikoTimeoutException,SSHException):
         try:
             net_connect = ConnectHandler(device_type= "cisco_nxos_telnet",host= sw_n,username= user,password= pas, fast_cli= False)
@@ -162,12 +164,12 @@ def main():
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
     print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se validara un total de {str(total_sw)} switch.")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor_nx:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor_nx:
         ejecucion_nx = {executor_nx.submit(NXOS,sw_n,user,pas,sw_out,fp): sw_n for sw_n in sw_nx}
     for output_nx in concurrent.futures.as_completed(ejecucion_nx):
         output_nx.result()
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor_ios:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor_ios:
         ejecucion_ios = {executor_ios.submit(IOS,sw_i,user,pas,sw_out,fp): sw_i for sw_i in sw_ios}
     for output_ios in concurrent.futures.as_completed(ejecucion_ios):
         output_ios.result()
