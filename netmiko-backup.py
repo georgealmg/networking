@@ -33,8 +33,8 @@ def DC(sw,user,pas,sw_out):
 
 def main():
     windowsuser = os.getlogin()
-    os.chdir("C:/Users/"+windowsuser+"/Documents")
-    os.chdir("C:/Users/"+windowsuser+"/Documents/Python-Respaldos")
+    os.chdir(f"C:/Users/{windowsuser}/Documents")
+    os.chdir(f"C:/Users/{windowsuser}/Documents/Python-Respaldos")
     user = ""
     pas = ""
     sw_dc = []
@@ -57,18 +57,21 @@ def main():
     directorio_fecha = fecha.strftime("%d-%m-%y")
     directorio = "Data_Center"
     try:
-        os.mkdir(f"C:/Users/"+windowsuser+"/Documents/Python-Respaldos/{directorio}")
+        os.mkdir(f"C:/Users/{windowsuser}/Documents/Python-Respaldos/{directorio}")
     except(FileExistsError):
         print(f"La carpeta {directorio} ya existe.")
-    os.mkdir(f"C:/Users/"+windowsuser+"/Documents/Python-Respaldos/{directorio}/{directorio_fecha}")
-    os.chdir(f"C:/Users/"+windowsuser+"/Documents/Python-Respaldos/{directorio}/{directorio_fecha}")
+    try:
+        os.mkdir(f"C:/Users/{windowsuser}/Documents/Python-Respaldos/{directorio}/{directorio_fecha}")
+    except(FileExistsError):
+        print(f"La carpeta {directorio}/{directorio_fecha} ya existe.")
+    os.chdir(f"C:/Users/{windowsuser}/Documents/Python-Respaldos/{directorio}/{directorio_fecha}")
     with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor_nx:
         ejecucion_nx = {executor_nx.submit(DC,sw,user,pas,sw_out,directorio,directorio_fecha): sw for sw in sw_dc}
     for output_nx in concurrent.futures.as_completed(ejecucion_nx):
         output_nx.result()
 
     print(f"Equipos caidos: {sw_out}")
-    os.chdir("C:/Users/"+windowsuser+"/Documents/Python-Respaldos")
+    os.chdir(f"C:/Users/{windowsuser}/Documents/Python-Respaldos")
     fp.write("Equipos caidos:"+"\n")
     for sw in sw_out:
         fp.write(sw+"\n")
