@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.1.0
+#v1.1.1
 
 import os, getpass, sys, re
 from datetime import datetime
@@ -123,9 +123,9 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
     status = conn.send_command("show interface %s status" % inter)
     if "aseT" in status or "-T" in status:
         list_of_sfp.append("TX")
-    elif "base-SR" in status:
+    elif "ase-SR" in status:
         list_of_sfp.append("SR")
-    elif "base-SX" in status or "BaseSX" in status:
+    elif "ase-SX" in status or "BaseSX" in status:
         list_of_sfp.append("SX")
     elif "Po" in inter:
         list_of_sfp.append("Port-channel")
@@ -179,6 +179,9 @@ def validacion(conn):
         for inter in portchannel_interfaces:
             data_extraction(conn,inter,list_of_uplinks,hostname)
     else:
+        te_interfaces = re.findall(r"Te\d/\d+", status)
+        for inter in te_interfaces:
+            data_extraction(conn,inter,list_of_uplinks,hostname)
         gi_interfaces = re.findall(r"Gi\d/\d+", status)
         for inter in gi_interfaces:
             data_extraction(conn,inter,list_of_uplinks,hostname)
