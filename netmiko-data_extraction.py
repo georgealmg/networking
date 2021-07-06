@@ -48,9 +48,9 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
             port_0 = re.search(r"\d+",channel)
             if port_0 != None:
                 port = port_0.group()
-                if "auto" in channel or "desirable" in channel:
+                if "active" in channel or "passive" in channel:
                     channel_type = "LACP"
-                elif "active" in channel or "passive" in channel:
+                elif "auto" in channel or "desirable" in channel:
                     channel_type = "PAgP"
                 elif "on" in channel:
                     channel_type = "on"
@@ -86,9 +86,9 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
             port_0 = re.search(r"\d+",channel)
             if port_0 != None:
                 port = port_0.group()
-                if "auto" in channel or "desirable" in channel:
+                if "active" in channel or "passive" in channel:
                     channel_type = "LACP"
-                elif "active" in channel or "passive" in channel:
+                elif "auto" in channel or "desirable" in channel:
                     channel_type = "PAgP"
                 elif "on" in channel:
                     channel_type = "on"
