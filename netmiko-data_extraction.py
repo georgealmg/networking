@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.1.1
+#v1.1.2
 
 import os, getpass, sys, re
 from datetime import datetime
@@ -26,15 +26,20 @@ list_of_host = []
 list_of_sw = []
 list_of_channel = []
 list_of_sfp = []
+list_of_running = []
 total_sw = len(sw)
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se validara un total de {str(total_sw)} switch.")
 
 def data_extraction(conn,inter,list_of_uplinks,hostname):
-    if sw_i in "": #NEXUS_OS
-        state = conn.send_command("show interface %s | include down" % inter)
-        if "is down" in state:
+    #Condicion aplica para equipos Nexus debido a sus output distintos.
+    if sw_i in []:
+        #Validacion de estado de interfaz.
+        state = conn.send_command(f"show interface {inter} | include down")
+        if "authorization failed" in state:
+            list_of_states.append("Error de autorización")
+        elif "is down" in state:
             state_0 = re.search(r"\(\D+\)",state)
             if state_0 == None:
                 list_of_states.append("(down)")
@@ -43,36 +48,47 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
                 list_of_states.append(state)
         else:
             list_of_states.append("(connected)")
+        #Validacion de configuracion de port-channel.
         if "Po" not in inter:
-            channel = conn.send_command("show running-config interface %s | include channel" % inter)
-            port_0 = re.search(r"\d+",channel)
-            if port_0 != None:
-                port = port_0.group()
-                if "active" in channel or "passive" in channel:
-                    channel_type = "LACP"
-                elif "auto" in channel or "desirable" in channel:
-                    channel_type = "PAgP"
-                elif "on" in channel:
-                    channel_type = "on"
-                channel = "Po"+ str(port) + " "+ channel_type
-                list_of_channel.append(channel)
-            elif port_0 == None:
-                list_of_channel.append("Interfaz standalone")
-        elif "Po" in inter:
-            channel = conn.send_command("show port-channel summary | include %s" % inter)
-            port_0 = re.search(r"Po\d+\(\w+\)",channel)
-            port = port_0.group()
-            if "LACP" in channel:
-                channel_type = "LACP"
-            elif "PAgP"in channel:
-                channel_type = "PAgP"
+            channel = conn.send_command(f"show running-config interface {inter} | include channel")
+            if "authorization failed" in channel:
+                list_of_channel.append("Error de autorización")
             else:
-                channel_type = "on"
-            channel = port + " "+ channel_type
+                port_0 = re.search(r"\d+",channel)
+                if port_0 != None:
+                    port = port_0.group()
+                    if "active" in channel or "passive" in channel:
+                        channel_type = "LACP"
+                    elif "auto" in channel or "desirable" in channel:
+                        channel_type = "PAgP"
+                    elif "on" in channel:
+                        channel_type = "on"
+                    channel = "Po"+ str(port) + " "+ channel_type
+                    list_of_channel.append(channel)
+                elif port_0 == None:
+                    list_of_channel.append("Interfaz standalone")
+        elif "Po" in inter:
+            channel = conn.send_command(f"show port-channel summary | include {inter}")
+            if "authorization failed" in channel:
+                list_of_channel.append("Error de autorización")
+            else:
+                port_0 = re.search(r"Po\d+\(\w+\)",channel)
+                port = port_0.group()
+                if "LACP" in channel:
+                    channel_type = "LACP"
+                elif "PAgP" in channel:
+                    channel_type = "PAgP"
+                else:
+                    channel_type = "on"
+                channel = port + " "+ channel_type
             list_of_channel.append(channel)
-    else: #IOS
-        state = conn.send_command("show interface %s | include line" % inter)
-        if "is up" in state:
+    #Condicion aplica para equipos IOS.
+    else:
+        #Validacion de estado de interfaz.
+        state = conn.send_command(f"show interface {inter} | include line")
+        if "authorization failed" in state:
+            list_of_states.state("Error de autorización")
+        elif "is up" in state:
             list_of_states.append("(connected)")
         else:
             state_0 = re.search(r"\(\D+\)",state)
@@ -81,47 +97,62 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
             else:
                 state = state_0.group()
                 list_of_states.append(state)
+        #Validacion de configuracion de port-channel.
         if "Po" not in inter:
-            channel = conn.send_command("show running-config interface %s | include channel" % inter)
-            port_0 = re.search(r"\d+",channel)
-            if port_0 != None:
-                port = port_0.group()
-                if "active" in channel or "passive" in channel:
-                    channel_type = "LACP"
-                elif "auto" in channel or "desirable" in channel:
-                    channel_type = "PAgP"
-                elif "on" in channel:
-                    channel_type = "on"
-                channel = "Po"+ str(port) + " "+ channel_type
-                list_of_channel.append(channel)
-            elif port_0 == None:
-                list_of_channel.append("Interfaz standalone")
-        elif "Po" in inter:
-            channel = conn.send_command("show etherchannel summary | include %s" % inter)
-            port_0 = re.search(r"Po\d+\(\w+\)",channel)
-            port = port_0.group()
-            if "LACP" in channel:
-                channel_type = "LACP"
-            elif "PAgP"in channel:
-                channel_type = "PAgP"
+            channel = conn.send_command(f"show running-config interface {inter} | include channel")
+            if "authorization failed" in channel:
+                list_of_channel.append("Error de autorización")
             else:
-                channel_type = "on"
-            channel = port + " "+ channel_type
-            list_of_channel.append(channel)
+                port_0 = re.search(r"\d+",channel)
+                if port_0 != None:
+                    port = port_0.group()
+                    if "active" in channel or "passive" in channel:
+                        channel_type = "LACP"
+                    elif "auto" in channel or "desirable" in channel:
+                        channel_type = "PAgP"
+                    elif "on" in channel:
+                        channel_type = "on"
+                    channel = "Po"+ str(port) + " "+ channel_type
+                    list_of_channel.append(channel)
+                elif port_0 == None:
+                    list_of_channel.append("Interfaz standalone")
+        elif "Po" in inter:
+            channel = conn.send_command(f"show etherchannel summary | include {inter}")
+            if "authorization failed" in channel:
+                list_of_channel.append("Error de autorización")
+            else:
+                port_0 = re.search(r"Po\d+\(\w+\)",channel)
+                port = port_0.group()
+                if "LACP" in channel:
+                    channel_type = "LACP"
+                elif "PAgP" in channel:
+                    channel_type = "PAgP"
+                else:
+                    channel_type = "on"
+                channel = port + " "+ channel_type
+                list_of_channel.append(channel)
+    #Extraccion de hostname.
     list_of_host.append(hostname.strip("#"))
     list_of_sw.append(sw_i)
     if inter in list_of_uplinks:
         list_of_mac.append("Interfaz de interconexion")
+    #Validacion de MAC en interfaces de acceso.
     elif inter not in list_of_uplinks:
-        mac_add = conn.send_command("show mac address interface %s" % inter)
-        mac_int = re.findall(r"\w+[.]\w+[.]\w*", mac_add)
-        if mac_int == []:
-            list_of_mac.append("Interfaz sin MAC")
-        elif mac_int != []:
-            list_of_mac.append(mac_int)
+        mac_add = conn.send_command(f"show mac address interface {inter}")
+        if "authorization failed" in mac_add:
+            list_of_mac.append("Error de autorización")
+        else:
+            mac_int = re.findall(r"\w+[.]\w+[.]\w*", mac_add)
+            if mac_int == []:
+                list_of_mac.append("Interfaz sin MAC")
+            elif mac_int != []:
+                list_of_mac.append(mac_int)
     list_of_int.append(inter)
-    status = conn.send_command("show interface %s status" % inter)
-    if "aseT" in status or "-T" in status:
+    #Validacion de medio fisico.
+    status = conn.send_command(f"show interface {inter} status")
+    if "authorization failed" in status:
+        list_of_sfp.append("Error de autorización")
+    elif "aseT" in status or "-T" in status:
         list_of_sfp.append("TX")
     elif "ase-SR" in status:
         list_of_sfp.append("SR")
@@ -131,39 +162,64 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
         list_of_sfp.append("Port-channel")
     else:
         list_of_sfp.append("Not Present")
-    if "trunk" in status:
+    #Validacion de estado de switchport.
+    if "authorization failed" in status:
+        list_of_modes.append("Error de autorización")
+        list_of_vlan.append("Error de autorización")
+    elif "trunk" in status and "authorization failed" not in status:
         list_of_modes.append("trunk")
-        running_config = conn.send_command("show running-config interface %s | in allowed" % inter)
+        #Extraccion de VLAN.
+        running_config = conn.send_command(f"show running-config interface {inter} | in allowed")
+        if "authorization failed" in running_config:
+            list_of_vlan.append("Error de autorización")
         vlan = re.findall(r"\d+", running_config)
         if vlan != []:
             list_of_vlan.append(vlan)
         elif vlan == []:
             list_of_vlan.append("Interfaz sin VLAN")
-    elif "trunk" not in status:
+    elif "trunk" not in status and "authorization failed" not in status:
         list_of_modes.append("access")
-        running_config = conn.send_command("show running-config interface %s | in access" % inter)
+        #Extraccion de VLAN.
+        running_config = conn.send_command(f"show running-config interface {inter} | in access")
+        if "authorization failed" in running_config:
+            list_of_vlan.append("Error de autorización")
         vlan = re.findall(r"\d+", running_config)
         if vlan != []:
             list_of_vlan.append(vlan)
         elif vlan == []:
             list_of_vlan.append("Interfaz sin VLAN")
-    if "full" in status:
+    #Validacion de duplex.
+    if "authorization failed" in status:
+        list_of_duplex.append("Error de autorización")
+    elif "full" in status:
         list_of_duplex.append("Full")
     elif "half" in status:
         list_of_duplex.append("Half")
     elif "auto" in status:
         list_of_duplex.append("Auto")
-    speed_str = conn.send_command("show interface %s | include BW" % inter)
+    #Validacion de velocidades.
+    speed_str = conn.send_command(f"show interface {inter} | include BW")
+    if "authorization failed" in speed_str:
+        list_of_speeds.append("Error de autorización")
     bw_0 = re.search(r"BW \d+", speed_str)
     bw_1 = bw_0.group()
     speed = int(bw_1.strip("BW "))//1000
     list_of_speeds.append(speed)
-    description_0 = conn.send_command("show interface %s | in Description" % inter)
-    if description_0 != "":
+    #Extraccion de descripcion.
+    description_0 = conn.send_command(f"show interface {inter} | in Description")
+    if "authorization failed" in description_0:
+        list_of_description.append("Error de autorización")
+    elif description_0 != "":
         description = description_0.strip("Description: ")
         list_of_description.append(description)
     elif description_0 == "":
         list_of_description.append("Sin descripcion")
+    #Extraccion de configuracion de interfaz.    
+    running_config = conn.send_command(f"show running-config interface {inter}")
+    if "authorization failed" in running_config:
+        list_of_running.append("Error de autorización")
+    else:
+        list_of_running.append(running_config)
 
 def validacion(conn):
     hostname = conn.find_prompt()
@@ -210,6 +266,7 @@ for sw_i in sw:
         except:
             print(f"Switch con IP: {sw_i} esta fuera de linea")
 
+#Extraccion de direcciones IP.
 def direccion_IP(conn):
     hostname_gw = conn.find_prompt()
     print(f"Validando tabla de ARP en {hostname_gw} : {sw_gw}")
@@ -221,12 +278,18 @@ def direccion_IP(conn):
             list_of_ip.append("Interfaz de interconexion")
         else:
             for m in mac:
-                arp = conn.send_command("show ip arp | in %s" % m)
-                ip = re.findall(r"\d+[.]\d+[.]\d+[.]\d+", arp)
-                if ip != []:
-                    arp_list.append(ip)
-                elif ip == []:
-                    arp_list.append("Sin IP")
+                if m == "ffff.ffff.ffff":
+                    arp_list.append("MAC Broadcast")
+                else:
+                    arp = conn.send_command(f"show ip arp | in {m}")
+                    if "authorization failed" in arp:
+                        arp_list.append("Error de autorización")
+                    else:
+                        ip = re.findall(r"\d+[.]\d+[.]\d+[.]\d+", arp)
+                        if ip != []:
+                            arp_list.append(ip)
+                        elif ip == []:
+                            arp_list.append("Sin IP")
             list_of_ip.append(arp_list)
     print(f"Validacion de ARP finalizada en {hostname_gw} : {sw_gw}")
     conn.disconnect()
@@ -260,6 +323,7 @@ _= ws1.cell(column=10, row=1, value= "Description")
 _= ws1.cell(column=11, row=1, value= "Estado de interfaz")
 _= ws1.cell(column=12, row=1, value= "Port-channel")
 _= ws1.cell(column=13, row=1, value= "SFP")
+_= ws1.cell(column=14, row=1, value= "Configuracion")
 row_value = 2
 iterator = 0
 while iterator <= (len(list_of_int) - 1):
@@ -276,6 +340,7 @@ while iterator <= (len(list_of_int) - 1):
     _= ws1.cell(column=11, row=row_value, value=str(list_of_states[iterator]))
     _= ws1.cell(column=12, row=row_value, value=list_of_channel[iterator])
     _= ws1.cell(column=13, row=row_value, value=list_of_sfp[iterator])
+    _= ws1.cell(column=14, row=row_value, value=list_of_running[iterator])
     iterator+=1
     row_value+=1
 wb.save(filename = dest_filename)
