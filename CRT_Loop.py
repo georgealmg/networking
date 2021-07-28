@@ -26,7 +26,7 @@ for sw in SW:
     #fp = open(i+".txt", "w+")
     #Telnet
     if sw == '1.1.1.1':
-        crt.Screen.Send("telnet %s \r" % i)
+        crt.Screen.Send("telnet %s \r" % sw)
         crt.Screen.WaitForString("sername:")
         crt.Screen.Send("%s\r" % user)
         crt.Screen.WaitForString("assword:")
@@ -39,7 +39,7 @@ for sw in SW:
         crt.Sleep(500)
     #SSH
     elif sw != '1.1.1.1':
-        crt.Screen.Send("ssh -l %s %s\r" % (user, i))
+        crt.Screen.Send("ssh -l %s %s\r" % (user, sw))
         crt.Screen.Send("%s\r" % passwd)
         crt.Screen.Synchronous = True
         loop()
