@@ -172,11 +172,12 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
         running_config = conn.send_command(f"show running-config interface {inter} | in allowed")
         if "authorization failed" in running_config:
             list_of_vlan.append("Error de autorización")
-        vlan = re.findall(r"\d+", running_config)
-        if vlan != []:
-            list_of_vlan.append(vlan)
-        elif vlan == []:
-            list_of_vlan.append("Interfaz sin VLAN")
+        else:
+            vlan = re.findall(r"\d+", running_config)
+            if vlan != []:
+                list_of_vlan.append(vlan)
+            elif vlan == []:
+                list_of_vlan.append("Interfaz sin VLAN")
     elif "trunk" not in status and "authorization failed" not in status:
         list_of_modes.append("access")
         #Extraccion de VLAN.
@@ -201,10 +202,11 @@ def data_extraction(conn,inter,list_of_uplinks,hostname):
     speed_str = conn.send_command(f"show interface {inter} | include BW")
     if "authorization failed" in speed_str:
         list_of_speeds.append("Error de autorización")
-    bw_0 = re.search(r"BW \d+", speed_str)
-    bw_1 = bw_0.group()
-    speed = int(bw_1.strip("BW "))//1000
-    list_of_speeds.append(speed)
+    else:
+        bw_0 = re.search(r"BW \d+", speed_str)
+        bw_1 = bw_0.group()
+        speed = int(bw_1.strip("BW "))//1000
+        list_of_speeds.append(speed)
     #Extraccion de descripcion.
     description_0 = conn.send_command(f"show interface {inter} | in Description")
     if "authorization failed" in description_0:
@@ -327,20 +329,62 @@ _= ws1.cell(column=14, row=1, value= "Configuracion")
 row_value = 2
 iterator = 0
 while iterator <= (len(list_of_int) - 1):
-    _= ws1.cell(column=1, row=row_value, value=list_of_host[iterator])
-    _= ws1.cell(column=2, row=row_value, value=list_of_sw[iterator])
-    _= ws1.cell(column=3, row=row_value, value=str(list_of_ip[iterator])) 
-    _= ws1.cell(column=4, row=row_value, value=str(list_of_mac[iterator]))
-    _= ws1.cell(column=5, row=row_value, value=list_of_int[iterator])
-    _= ws1.cell(column=6, row=row_value, value=str(list_of_vlan[iterator]))
-    _= ws1.cell(column=7, row=row_value, value=list_of_speeds[iterator])
-    _= ws1.cell(column=8, row=row_value, value=list_of_duplex[iterator])
-    _= ws1.cell(column=9, row=row_value, value=list_of_modes[iterator])
-    _= ws1.cell(column=10, row=row_value, value=str(list_of_description[iterator]))
-    _= ws1.cell(column=11, row=row_value, value=str(list_of_states[iterator]))
-    _= ws1.cell(column=12, row=row_value, value=list_of_channel[iterator])
-    _= ws1.cell(column=13, row=row_value, value=list_of_sfp[iterator])
-    _= ws1.cell(column=14, row=row_value, value=list_of_running[iterator])
+    try:
+        _= ws1.cell(column=1, row=row_value, value=list_of_host[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=2, row=row_value, value=list_of_sw[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=3, row=row_value, value=str(list_of_ip[iterator]))
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=4, row=row_value, value=str(list_of_mac[iterator]))
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=5, row=row_value, value=list_of_int[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=6, row=row_value, value=str(list_of_vlan[iterator]))
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=7, row=row_value, value=list_of_speeds[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=8, row=row_value, value=list_of_duplex[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=9, row=row_value, value=list_of_modes[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=10, row=row_value, value=str(list_of_description[iterator]))
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=11, row=row_value, value=str(list_of_states[iterator]))
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=12, row=row_value, value=list_of_channel[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=13, row=row_value, value=list_of_sfp[iterator])
+    except(IndexError):
+        pass
+    try:
+        _= ws1.cell(column=14, row=row_value, value=list_of_running[iterator])
+    except(IndexError):
+        pass
     iterator+=1
     row_value+=1
 wb.save(filename = dest_filename)
