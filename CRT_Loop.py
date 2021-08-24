@@ -4,10 +4,10 @@ os.chdir("C:/Users/jmarcano/Documents/Python")
 crt.Screen.Synchronous = True
 user = crt.Dialog.Prompt("Enter user for SSH:")
 passwd = crt.Dialog.Prompt("Enter password:")
-pivotes = {"piv":"172.22.1.1","piv2":"172.22.2.1"}
+pivotes = {}
 SW = []
 comandos = ["terminal length 0"]
-for ip in open("IP_validacion.txt"):
+for ip in open("sw_list.txt"):
     SW.append(ip.strip("\n"))
 fp = open("validacion_CRT.txt", "w+")
 try:
@@ -16,6 +16,7 @@ try:
 except:
     cmd = "/SSH2 /L %s /PASSWORD %s %s" % (user, passwd, pivotes.get("piv2"))
     crt.Session.Connect(cmd)
+
 def loop():
     for command in comandos:
         crt.Screen.Send("%s\r" % command)
@@ -26,7 +27,7 @@ for sw in SW:
     #fp = open(i+".txt", "w+")
     #Telnet
     if sw == '1.1.1.1':
-        crt.Screen.Send("telnet %s \r" % sw)
+        crt.Screen.Send("telnet %s\r" % sw)
         crt.Screen.WaitForString("sername:")
         crt.Screen.Send("%s\r" % user)
         crt.Screen.WaitForString("assword:")
