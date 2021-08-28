@@ -52,7 +52,7 @@ def main():
             break
     tiempo1 = datetime.now()
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se respaldara la configuracion de {len(sw_dc)} equipos.")
+    print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se respaldara la configuracion de {str(len(sw_dc))} equipos.")
     
     fecha = datetime.now()
     directorio_fecha = fecha.strftime("%d-%m-%y")
@@ -78,7 +78,7 @@ def main():
 
     tiempo2 = datetime.now()
     tiempo_final = tiempo2.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa finalizo a las {tiempo_final}, se respaldo la configuracion de {len(sw_dc)} equipos, {len(sw_out)} de los equipos estan fuera de linea.")
+    print(f"La ejecucion de este programa finalizo a las {tiempo_final}, se respaldo la configuracion de {str(len(sw_dc))} equipos, {str(len(sw_out))} de los equipos estan fuera de linea.")
     tiempo_ejecucion = tiempo2 - tiempo1
     print(f"El tiempo de ejecucion del programa fue de: {tiempo_ejecucion}")
 
