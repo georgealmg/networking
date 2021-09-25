@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
-#v1.0.2
+#v1.0.3
 
-import os, concurrent.futures, sys
-from openpyxl import load_workbook
-from getpass import getpass
+import concurrent.futures, os, sys
+from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
-from netmiko.ssh_exception import NetMikoTimeoutException, SSHException, AuthenticationException
+from netmiko.ssh_exception import SSHException, AuthenticationException
+from openpyxl import load_workbook
 
-def backup(sw,user,pas,sw_out):
-    try:
-        conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas)
-    except(AuthenticationException):
-        sys.exit("Por favor ejecute nuevamente el programa ya que introdujo una contraseña erronea.")
-    except(NetMikoTimeoutException,SSHException):
-        try:
-            conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas)
-        except:
-            print(f"Switch con IP \"{sw}\" esta fuera de linea.")
-            sw_out.append(sw)
-            return None
+def backup(conn,date):
     hostname = conn.find_prompt()
-    respaldos_txt = open(hostname.strip("#")+".txt","+w")
+    try:
+        respaldos_txt = open((f"/mnt/c/{getuser()}/Documents/Backup {date}/{hostname}+.txt","+w"))
+    except(FileNotFoundError):
+        respaldos_txt = open((f"{os.getcwd()}/Documents/Backup {date}/{hostname}+.txt","+w"))
     respaldos_txt.write(conn.send_command("show running-config"))
     respaldos_txt.close()
     try:
@@ -31,56 +23,94 @@ def backup(sw,user,pas,sw_out):
     conn.disconnect()
     print(f"{hostname} configuracion respaldada.")
 
-def main():
-    windowsuser = os.getlogin()
+def connection(sw,user,pas,sw_out,date):
     try:
-        os.chdir("C:/Users/"+str(windowsuser)+"/Documents")
+        conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
+        backup(conn,date)
+    except(ConnectionRefusedError):
+        sw_out.append(sw)
+        print(f"Error:{sw}:ConnectionRefused error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+        swout_file.close()
+    except(AuthenticationException):
+        sw_out.append(sw)
+        print(f"Error:{sw}:Authentication error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.close()
+    except(SSHException):
+        try:
+            conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
+            backup(conn,date)
+        except(ConnectionRefusedError):
+            sw_out.append(sw)
+            print(f"Error:{sw}:ConnectionRefused error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+            swout_file.close()
+        except(TimeoutError):
+            sw_out.append(sw)
+            print(f"Error:{sw}:Timeout error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:Timeout error"+"\n")
+            swout_file.close()
+        except(AuthenticationException):
+            sw_out.append(sw)
+            print(f"Error:{sw}:Authentication error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+            swout_file.close()
+    except(EOFError):
+        sw_out.append(sw)
+        print(f"Error:{sw}:EOF error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:EOF error"+"\n")
+        swout_file.close()
+
+def main():
+    try:
+       os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
     except(FileNotFoundError):
         os.chdir(os.getcwd())
     user = input("Username: ")
     pas = getpass()
-
-    sw_dc = []
+    sw_ios = []
     sw_out = []
+    swout_file = open("sw_out.txt","+w")
+    swout_file.close()
+
     excel_file = load_workbook("Respaldos.xlsx")
-    sheet = excel_file["IP"]
+    sheet = excel_file["Devices"]
     for ip in range(2, 999999):
         valor = sheet.cell(row=ip, column=1).value
-        if valor != None and valor not in sw_dc:
-            sw_dc.append(valor)
+        if valor != None and valor not in sw_ios:
+            sw_ios.append(valor)
         elif valor == None:
             break
     tiempo1 = datetime.now()
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se respaldara la configuracion de {str(len(sw_dc))} equipos.")
-    
-    fecha = datetime.now()
-    directorio_fecha = fecha.strftime("%d-%m-%y")
-    directorio = "Data Center"
-    try:
-        os.mkdir(f"C:/Users/{windowsuser}/Documents/{directorio}")
-    except(FileExistsError):
-        print(f"La carpeta {directorio} ya existe.")
-    try:
-        os.mkdir(f"C:/Users/{windowsuser}/Documents/{directorio}/{directorio_fecha}")
-    except(FileExistsError):
-        print(f"La carpeta {directorio}/{directorio_fecha} ya existe.")
-    os.chdir(f"C:/Users/{windowsuser}/Documents/{directorio}/{directorio_fecha}")
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor_nx:
-        ejecucion_nx = {executor_nx.submit(backup,sw,user,pas,sw_out,directorio,directorio_fecha): sw for sw in sw_dc}
-    for output_nx in concurrent.futures.as_completed(ejecucion_nx):
-        output_nx.result()
+    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a respaldar: {str(len(sw_ios))}",sep="\n")
 
-    with open("sw_out.txt","+w") as file:
-        for sw in sw_out:
-            file.write(sw)
+    date = tiempo1.strftime("%d-%m-%y")
+    try:
+        os.mkdir(f"/mnt/c/{getuser()}/Documents/Backup {date}")
+    except(FileExistsError):
+        try:
+            os.mkdir(f"{os.getcwd()}/Backup {date}")
+        except(FileExistsError):
+            pass
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        ejecucion = {executor.submit(backup,sw,user,pas,sw_out,date): sw for sw in sw_ios}
+    for output in concurrent.futures.as_completed(ejecucion):
+        output.result()
 
     tiempo2 = datetime.now()
     tiempo_final = tiempo2.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa finalizo a las {tiempo_final}, se respaldo la configuracion de {str(len(sw_dc))} equipos, {str(len(sw_out))} de los equipos estan fuera de linea.")
     tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"El tiempo de ejecucion del programa fue de: {tiempo_ejecucion}")
+    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de configuraciones respaldadas: {str(len(sw_ios)-len(sw_out))}",
+    f"Total de equipos fuera: {str(len(sw_out))}",sep="\n")
 
 if __name__ == "__main__":
     main()

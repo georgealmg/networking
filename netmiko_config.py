@@ -1,60 +1,97 @@
 #!/usr/bin/env python3
-#v1.0.2
+#v1.0.3
 
+import concurrent.futures, os, sys
+from getpass import getpass, getuser
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException, NetmikoTimeoutException
 from datetime import datetime
-import getpass, os, sys, concurrent.futures
 
-def config(sw,user,pas,fp,fp1,comandos_nx,out_count):
-    try:
-        conn = ConnectHandler(device_type= "cisco_nxos_ssh",host= sw,username= user,password= pas)
-    except(AuthenticationException):
-        sys.exit("Por favor ejecute nuevamente el programa ya que introdujo una contraseña erronea.")
-    except(SSHException, NetmikoTimeoutException):
-        out_count += 1
-        fp1.write(sw+"\n")
-        print(f"Switch con IP \"{sw}\" esta fuera de linea")
-        return None
+def config(sw,conn,comandos):
     hostname = conn.find_prompt()
-    print(f"Ejecucion iniciada en {hostname} : {sw}")
-    output = conn.send_config_set(comandos_nx)
-    fp.write(f"{hostname} {sw}\n{output}\n")
-    print(f"Ejecucion finalizada en {hostname} : {sw}")
+    print(f"Ejecucion iniciada --> {hostname}.")
+    output = conn.send_config_set(comandos)
+    outputfile = open("config.txt","+a")
+    outputfile.write(f"{hostname} {sw}\n{output}\n")
+    outputfile.close()
+    print(f"Ejecucion finalizada --> {hostname}.")
     conn.save_config()
     conn.disconnect()
 
-def main():
-    
-    windowsuser = os.getlogin()
+def connection(sw,user,pas,sw_out,comandos):
     try:
-        os.chdir("C:/Users/"+str(windowsuser)+"/Documents")
+        conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
+        config(sw,conn,comandos)
+    except(ConnectionRefusedError):
+        sw_out.append(sw)
+        print(f"Error:{sw}:ConnectionRefused error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+        swout_file.close()
+    except(AuthenticationException):
+        sw_out.append(sw)
+        print(f"Error:{sw}:Authentication error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.close()
+    except(SSHException):
+        try:
+            conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
+            config(sw,conn,comandos)
+        except(ConnectionRefusedError):
+            sw_out.append(sw)
+            print(f"Error:{sw}:ConnectionRefused error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+            swout_file.close()
+        except(TimeoutError):
+            sw_out.append(sw)
+            print(f"Error:{sw}:Timeout error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:Timeout error"+"\n")
+            swout_file.close()
+        except(AuthenticationException):
+            sw_out.append(sw)
+            print(f"Error:{sw}:Authentication error")
+            swout_file = open("sw_out.txt","+a")
+            swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+            swout_file.close()
+    except(EOFError):
+        sw_out.append(sw)
+        print(f"Error:{sw}:EOF error")
+        swout_file = open("sw_out.txt","+a")
+        swout_file.write(f"Error:{sw}:EOF error"+"\n")
+        swout_file.close()
+
+def main():
+    try:
+       os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
     except(FileNotFoundError):
         os.chdir(os.getcwd())
     user = input("Username: ")
-    pas = getpass.getpass()
+    pas = getpass()
+    sw_ios = []
+    comandos = []
+    sw_out = []
+    outputfile = open("config.txt","w+")
+    outputfile.close()
+    swout_file = open("sw_out.txt","w+")
+    swout_file.close()
 
-    sw_nxos = []
-    comandos_nx = []
-    out_count = 0
-    fp = open("config.txt","w+")
-    fp1 = open("sw_out.txt","w+")
     tiempo1 = datetime.now()
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa inicio a las {tiempo_inicial}, se validara un total de {str(len(sw_nxos))} switch.")
+    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a configurar: {str(len(sw_ios))}",sep="\n")
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor_nx:
-        ejecucion_nx = {executor_nx.submit(config,sw,user,pas,fp,fp1,comandos_nx,out_count): sw for sw in sw_nxos}
-    for output_nx in concurrent.futures.as_completed(ejecucion_nx):
-        output_nx.result()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        ejecucion = {executor.submit(config,sw,user,pas,sw_out,comandos): sw for sw in sw_ios}
+    for output in concurrent.futures.as_completed(ejecucion):
+        output.result()
 
-    fp.close()
-    fp1.close()
     tiempo2 = datetime.now()
     tiempo_final = tiempo2.strftime("%H:%M:%S")
-    print(f"La ejecucion de este programa finalizo a las {tiempo_final}, se configurara un total de {str(len(sw_nxos))} equipos")
     tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"El tiempo de ejecucion del programa fue de {tiempo_ejecucion}, {str(out_count)} de los equipos no pudieron ser configurados")
+    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(len(sw_ios))}", 
+    f"Total de equipos configurados{str(len(sw_ios) - len(sw_out))}", f"Total de equipos fuera: {str(len(sw_out))}",sep="\n")
 
 if __name__ == "__main__":
     main()
