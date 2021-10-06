@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-#v1.0.8
+#v1.0.9
 
-import csv,concurrent.futures, os, re, sys
+import csv,concurrent.futures, os, re, sys, time
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
@@ -24,6 +24,7 @@ def inter_output(conn,description,hostname,sw,poe,writer):
         vlan = vlan.group(7)
     except(AttributeError):
         vlan = "1"
+    time.sleep(1)
     writer.writerow({"Hostname":hostname,"Hostaddress":sw,"Port":port.group(1),"PoE":poe,"Status":port.group(3),"Description":port.group(7),"VLAN":vlan})
         
 def suc(conn,sw,writer):
@@ -52,13 +53,13 @@ def connection(sw,user,pas,sw_out,swout_file,writer):
     except(ConnectionRefusedError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
         swout_file.close()
     except(AuthenticationException):
         sw_out.append(sw)
         print(f"Error:{sw}:Authentication error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:Authentication error"+"\n")
         swout_file.close()
     except(SSHException):
@@ -68,25 +69,25 @@ def connection(sw,user,pas,sw_out,swout_file,writer):
         except(ConnectionRefusedError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             swout_file.close()
         except(TimeoutError):
             sw_out.append(sw)
             print(f"Error:{sw}:Timeout error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Timeout error"+"\n")
             swout_file.close()
         except(AuthenticationException):
             sw_out.append(sw)
             print(f"Error:{sw}:Authentication error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:EOF error"+"\n")
         swout_file.close()
 
@@ -99,10 +100,10 @@ def main():
     pas = getpass()
     sw_ios = []
     sw_out = []
-    swout_file = open("sw_out.txt","+w")
+    swout_file = open("sw_out.txt","w")
     swout_file.close()
 
-    data_file = open("Ports.csv","w+", newline='')
+    data_file = open("Ports.csv","w", newline='')
     first_row = ["Hostname","Hostaddress","Port","PoE","Status","Description","VLAN"]
     writer = csv.DictWriter(data_file, fieldnames=first_row)
     writer.writeheader()

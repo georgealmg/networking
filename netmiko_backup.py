@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.3
+#v1.0.4
 
 import concurrent.futures, os, sys
 from getpass import getpass, getuser
@@ -11,9 +11,9 @@ from openpyxl import load_workbook
 def backup(conn,date):
     hostname = conn.find_prompt()
     try:
-        respaldos_txt = open((f"/mnt/c/{getuser()}/Documents/Backup {date}/{hostname}+.txt","+w"))
+        respaldos_txt = open((f"/mnt/c/{getuser()}/Documents/Backup {date}/{hostname}+.txt","w"))
     except(FileNotFoundError):
-        respaldos_txt = open((f"{os.getcwd()}/Documents/Backup {date}/{hostname}+.txt","+w"))
+        respaldos_txt = open((f"{os.getcwd()}/Documents/Backup {date}/{hostname}+.txt","w"))
     respaldos_txt.write(conn.send_command("show running-config"))
     respaldos_txt.close()
     try:
@@ -30,13 +30,13 @@ def connection(sw,user,pas,sw_out,date):
     except(ConnectionRefusedError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
         swout_file.close()
     except(AuthenticationException):
         sw_out.append(sw)
         print(f"Error:{sw}:Authentication error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:Authentication error"+"\n")
         swout_file.close()
     except(SSHException):
@@ -46,25 +46,25 @@ def connection(sw,user,pas,sw_out,date):
         except(ConnectionRefusedError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             swout_file.close()
         except(TimeoutError):
             sw_out.append(sw)
             print(f"Error:{sw}:Timeout error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Timeout error"+"\n")
             swout_file.close()
         except(AuthenticationException):
             sw_out.append(sw)
             print(f"Error:{sw}:Authentication error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:EOF error"+"\n")
         swout_file.close()
 
@@ -77,7 +77,7 @@ def main():
     pas = getpass()
     sw_ios = []
     sw_out = []
-    swout_file = open("sw_out.txt","+w")
+    swout_file = open("sw_out.txt","w")
     swout_file.close()
 
     excel_file = load_workbook("Respaldos.xlsx")

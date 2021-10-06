@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.3
+#v1.0.4
 
 import concurrent.futures, os, sys
 from getpass import getpass, getuser
@@ -11,7 +11,7 @@ def config(sw,conn,comandos):
     hostname = conn.find_prompt()
     print(f"Ejecucion iniciada --> {hostname}.")
     output = conn.send_config_set(comandos)
-    outputfile = open("config.txt","+a")
+    outputfile = open("config.txt","a")
     outputfile.write(f"{hostname} {sw}\n{output}\n")
     outputfile.close()
     print(f"Ejecucion finalizada --> {hostname}.")
@@ -25,13 +25,13 @@ def connection(sw,user,pas,sw_out,comandos):
     except(ConnectionRefusedError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
         swout_file.close()
     except(AuthenticationException):
         sw_out.append(sw)
         print(f"Error:{sw}:Authentication error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:Authentication error"+"\n")
         swout_file.close()
     except(SSHException):
@@ -41,25 +41,25 @@ def connection(sw,user,pas,sw_out,comandos):
         except(ConnectionRefusedError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             swout_file.close()
         except(TimeoutError):
             sw_out.append(sw)
             print(f"Error:{sw}:Timeout error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Timeout error"+"\n")
             swout_file.close()
         except(AuthenticationException):
             sw_out.append(sw)
             print(f"Error:{sw}:Authentication error")
-            swout_file = open("sw_out.txt","+a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
-        swout_file = open("sw_out.txt","+a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:EOF error"+"\n")
         swout_file.close()
 
@@ -73,9 +73,9 @@ def main():
     sw_ios = []
     comandos = []
     sw_out = []
-    outputfile = open("config.txt","w+")
+    outputfile = open("config.txt","w")
     outputfile.close()
-    swout_file = open("sw_out.txt","w+")
+    swout_file = open("sw_out.txt","w")
     swout_file.close()
 
     tiempo1 = datetime.now()
