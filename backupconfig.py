@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #v1.0.4
 
-import concurrent.futures, socket, os
+import concurrent.futures, os, socket
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler

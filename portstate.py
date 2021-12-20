@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #v1.0.10
 
-import csv,concurrent.futures, socket, os, time
+import csv,concurrent.futures, os, socket, time
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
@@ -21,7 +21,7 @@ sw_out = []
 swout_file = open("sw_out.txt","w")
 swout_file.close()
 
-data_file = open("PuertasSuc.csv","w", newline='')
+data_file = open("Ports.csv","w", newline='')
 first_row = ["Hostname","Hostaddress","Port","PoE","Status","Description","VLAN"]
 writer = csv.DictWriter(data_file, fieldnames=first_row)
 writer.writeheader()
@@ -128,7 +128,7 @@ def main():
     date = tiempo1.strftime("%Y%m%d")
     csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
     csv_file.to_excel(f"Ports {date}.xlsx",index=None,header=True,freeze_panes=(1,0))
-    os.remove("PuertasSuc.csv")
+    os.remove("Ports.csv")
 
     contador_out = len(sw_out)
     tiempo2 = datetime.now()
