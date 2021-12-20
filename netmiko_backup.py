@@ -1,12 +1,33 @@
 #!/usr/bin/env python3
 #v1.0.4
 
-import concurrent.futures, os, sys
+import concurrent.futures, socket, os
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
-from netmiko.ssh_exception import SSHException, AuthenticationException
+from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from openpyxl import load_workbook
+
+try:
+   os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
+except(FileNotFoundError):
+    os.chdir(os.getcwd())
+
+user = input("Username: ")
+pas = getpass()
+sw_ios = []
+sw_out = []
+swout_file = open("sw_out.txt","w")
+swout_file.close()
+
+excel_file = load_workbook("Backup.xlsx")
+sheet = excel_file["Devices"]
+for ip in range(2, 999999):
+    valor = sheet.cell(row=ip, column=1).value
+    if valor != None and valor not in sw_ios:
+        sw_ios.append(valor)
+    elif valor == None:
+        break
 
 def backup(conn,date):
     hostname = conn.find_prompt()
@@ -23,33 +44,33 @@ def backup(conn,date):
     conn.disconnect()
     print(f"{hostname} configuracion respaldada.")
 
-def connection(sw,user,pas,sw_out,date):
+def connection(sw,date):
     try:
         conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
         backup(conn,date)
-    except(ConnectionRefusedError):
+    except(ConnectionRefusedError, ConnectionResetError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
         swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
         swout_file.close()
-    except(AuthenticationException):
+    except(TimeoutError, socket.timetout):
         sw_out.append(sw)
-        print(f"Error:{sw}:Authentication error")
+        print(f"Error:{sw}:Timeout error")
         swout_file = open("sw_out.txt","a")
-        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.write(f"Error:{sw}:Timeout error"+"\n")
         swout_file.close()
-    except(SSHException):
+    except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
             backup(conn,date)
-        except(ConnectionRefusedError):
+        except(ConnectionRefusedError, ConnectionResetError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
             swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             swout_file.close()
-        except(TimeoutError):
+        except(TimeoutError, socket.timetout):
             sw_out.append(sw)
             print(f"Error:{sw}:Timeout error")
             swout_file = open("sw_out.txt","a")
@@ -61,6 +82,12 @@ def connection(sw,user,pas,sw_out,date):
             swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
+    except(AuthenticationException):
+        sw_out.append(sw)
+        print(f"Error:{sw}:Authentication error")
+        swout_file = open("sw_out.txt","a")
+        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
@@ -69,25 +96,7 @@ def connection(sw,user,pas,sw_out,date):
         swout_file.close()
 
 def main():
-    try:
-       os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
-    except(FileNotFoundError):
-        os.chdir(os.getcwd())
-    user = input("Username: ")
-    pas = getpass()
-    sw_ios = []
-    sw_out = []
-    swout_file = open("sw_out.txt","w")
-    swout_file.close()
 
-    excel_file = load_workbook("Respaldos.xlsx")
-    sheet = excel_file["Devices"]
-    for ip in range(2, 999999):
-        valor = sheet.cell(row=ip, column=1).value
-        if valor != None and valor not in sw_ios:
-            sw_ios.append(valor)
-        elif valor == None:
-            break
     tiempo1 = datetime.now()
     tiempo_inicial = tiempo1.strftime("%H:%M:%S")
     print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a respaldar: {str(len(sw_ios))}",sep="\n")
@@ -102,7 +111,7 @@ def main():
             pass
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        ejecucion = {executor.submit(backup,sw,user,pas,sw_out,date): sw for sw in sw_ios}
+        ejecucion = {executor.submit(backup,sw,date): sw for sw in sw_ios}
     for output in concurrent.futures.as_completed(ejecucion):
         output.result()
 
