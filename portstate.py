@@ -10,12 +10,9 @@ from ntc_templates.parse import parse_output
 from pandas import read_csv
 
 try:
-    os.chdir("C:/Python")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
 except(FileNotFoundError):
-    try:
-        os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
-    except(FileNotFoundError):
-        os.chdir(os.getcwd())
+    os.chdir(os.getcwd())
         
 user = input("Username: ")
 pas = getpass()
