@@ -101,13 +101,13 @@ def data(conn,device):
 
 # Esta funcion se usa para el manejo de las conexiones paralelas.
 
-def l2data(device,sw_out):
+def l2data(device,sw_out,user,pas):
     try:
         if device in acc["ios"]:
-            conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=password)
+            conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=pas)
             data(conn,device)
         elif device in acc["nxos"]:
-            conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=password)
+            conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=pas)
             data(conn,device)
     except(ConnectionRefusedError, ConnectionResetError):
         sw_out.append(device)
@@ -129,7 +129,7 @@ def l2data(device,sw_out):
         swout_file.close()
     except(SSHException, NetmikoTimeoutException):
         try:
-            conn = ConnectHandler(device_type="cisco_ios_telnet" ,host=device ,username=user ,password=password)
+            conn = ConnectHandler(device_type="cisco_ios_telnet" ,host=device ,username=user ,password=pas)
             data(conn,device)
         except(ConnectionRefusedError, ConnectionResetError):
             sw_out.append(device)

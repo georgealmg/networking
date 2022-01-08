@@ -3,12 +3,15 @@
 
 import concurrent.futures, json, os, pandas
 from datetime import datetime
-from getpass import getuser
+from getpass import getuser, getpass
 from l3data import core, l3dict, l3data
-from l2data import l2dict, acc, dst, l2data
-from infobloxdata import dnsdata
+from l2data import l2dict, acc, l2data
+from dnsdata import dnsdata
 
 # Con este script se ejecutan los script l3, l2 y infoblox, tambien se une toda la data extraida para formar un solo JSON, este luego sera exportado a Excel.
+
+user = input("Username: ")
+pas = getpass()
 
 try:
     os.chdir("C:/Python")
@@ -23,7 +26,7 @@ tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print("L3 DATA",f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
 
-l3data(core,l3dict)
+l3data(core,l3dict,user,pas)
 
 # tiempo2 = datetime.now()
 # tiempo_final = tiempo2.strftime("%H:%M:%S")
@@ -41,11 +44,11 @@ def main():
     # print("L2 DATA",f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        ejecucion = {executor.submit(l2data,device,sw_out): device for device in acc["ios"]}
+        ejecucion = {executor.submit(l2data,device,sw_out,user,pas): device for device in acc["ios"]}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        ejecucion = {executor.submit(l2data,device,sw_out): device for device in acc["nxos"]}
+        ejecucion = {executor.submit(l2data,device,sw_out,user,pas): device for device in acc["nxos"]}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
 
@@ -69,7 +72,7 @@ if __name__ == "__main__":
 print("DNS DATA",sep="\n")
 # print("DNS DATA",f"Hora de inicio: {tiempo_inicial}",sep="\n")
 
-dnsdata()
+dnsdata(user,pas)
 
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")

@@ -8,15 +8,14 @@ from ntc_templates.parse import parse_output
 
 core = {"nxos":[], "ios":[]}
 l3dict = {"nxos":[], "ios":[]}
-user ,password = None, None
 
 # El objetivo de este script es la extraccion de las tablas ARP de los distintos core de la red.
 # Existen dos funciones, una para NXOS y otra para IOS, esto debido a la diferencia en los output de cada OS.
 # La data se almacena en un JSON.
 
-def l3data_nxos(core,l3dict):
+def l3data_nxos(core,l3dict,user,pas):
     for device in core["nxos"]:
-        conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=password)
+        conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=pas)
         print(f"Extrayendo data l3 --> {conn.find_prompt()}")
         arp = parse_output(platform="cisco_nxos",command="show ip arp",data=conn.send_command(f"show ip arp"))
         for entry in arp:
@@ -28,9 +27,9 @@ def l3data_nxos(core,l3dict):
                 pass
         conn.disconnect()
 
-def l3data_ios(core,l3dict):
+def l3data_ios(core,l3dict,user,pas):
     for device in core["ios"]:
-        conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=password)
+        conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=pas)
         print(f"Extrayendo data l3 --> {conn.find_prompt()}")
         arp = parse_output(platform="cisco_ios",command="show ip arp",data=conn.send_command(f"show ip arp"))
         for entry in arp:
