@@ -14,12 +14,9 @@ user = input("Username: ")
 pas = getpass()
 
 try:
-    os.chdir("C:/Python")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
 except(FileNotFoundError):
-    try:
-        os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
-    except(FileNotFoundError):
-        os.chdir(os.getcwd())
+    os.chdir(os.getcwd())
 
 total_sw = len(core["ios"]) + len(core["nxos"])
 tiempo1 = datetime.now()
