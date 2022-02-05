@@ -8,7 +8,6 @@ from napalm import get_network_driver
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from napalm.base.exceptions import ConnectionException
-from openpyxl import load_workbook
 
 # Script creado para configurar/validar los descriptores de las interfaces de los equipos, este script extrae data de un excel para determinar que se debe configurar
 # en cuanto a descriptores, la validacion se almacena en un csv.
@@ -42,26 +41,13 @@ def descrip_validation(conn,sw,writer):
     print(f"Validacion finalizada --> {hostname}")
     conn.close()
 
-def descrip_configuration(conn,sw,sw_list):
-    hostname = conn.find_prompt()
-    print(f"Configuracion iniciada --> {hostname}")
-    for value in sw_list[sw]:
-        data = value.split(",")
-        command = [f"interface {data[0]}",f"description {data[1]}"]
-        conn.send_config_set(command)
-    conn.save_config()
-    conn.disconnect()
-    print(f"Configuracion finalizada --> {hostname}")
 
 def connection(sw):
     try:
         if sw in ios:
-            conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
             driver = get_network_driver("ios")
         elif sw  in nxos:
-            conn = ConnectHandler(device_type= "cisco_nxos_ssh",host= sw,username= user,password= pas, fast_cli= False)
             driver = get_network_driver("nxos_ssh")
-        descrip_configuration(conn,sw,sw_list)
         conn = driver(hostname= sw,username= user, password= pas)
         conn.open()
         descrip_validation(conn,sw,writer)
@@ -86,7 +72,6 @@ def connection(sw):
     except(ConnectionException, SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas, fast_cli= False)
-            descrip_configuration(conn,sw,sw_list)
             conn = driver(hostname= sw,username= user, password= pas, optional_args= {"transport": 'telnet'})
             driver = get_network_driver("ios")
             conn.open()
