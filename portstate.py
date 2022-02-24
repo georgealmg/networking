@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.10
+#v1.0.11
 
 import csv,concurrent.futures, os, socket, time
 from getpass import getpass, getuser
@@ -78,6 +78,12 @@ def connection(sw):
         swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:Timeout error"+"\n")
         swout_file.close()
+    except(AuthenticationException):
+        sw_out.append(sw)
+        print(f"Error:{sw}:Authentication error")
+        swout_file = open("sw_out.txt","a")
+        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.close()
     except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
@@ -100,12 +106,6 @@ def connection(sw):
             swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
-    except(AuthenticationException):
-        sw_out.append(sw)
-        print(f"Error:{sw}:Authentication error")
-        swout_file = open("sw_out.txt","a")
-        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
-        swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
@@ -125,9 +125,8 @@ def main():
             output.result()
     data_file.close()
 
-    date = tiempo1.strftime("%Y%m%d")
     csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
-    csv_file.to_excel(f"Ports {date}.xlsx",index=None,header=True,freeze_panes=(1,0))
+    csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))
     os.remove("Ports.csv")
 
     contador_out = len(sw_out)

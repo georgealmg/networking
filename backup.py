@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.4
+#v1.0.5
 
 import concurrent.futures, os, socket
 from getpass import getpass, getuser
@@ -60,6 +60,12 @@ def connection(sw,date):
         swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{sw}:Timeout error"+"\n")
         swout_file.close()
+    except(AuthenticationException):
+        sw_out.append(sw)
+        print(f"Error:{sw}:Authentication error")
+        swout_file = open("sw_out.txt","a")
+        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
+        swout_file.close()
     except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
@@ -82,12 +88,6 @@ def connection(sw,date):
             swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{sw}:Authentication error"+"\n")
             swout_file.close()
-    except(AuthenticationException):
-        sw_out.append(sw)
-        print(f"Error:{sw}:Authentication error")
-        swout_file = open("sw_out.txt","a")
-        swout_file.write(f"Error:{sw}:Authentication error"+"\n")
-        swout_file.close()
     except(EOFError):
         sw_out.append(sw)
         print(f"Error:{sw}:EOF error")
