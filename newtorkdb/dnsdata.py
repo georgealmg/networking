@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-#v1.0.0
+#v1.0.1
 
 import json, requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 dnsdict = {}
 recordstoignore = []
+infobloxip = "x.x.x.x"
 
 # Por medio de este script se obtienen todos los registros DNS estaticos por medio de la REST API del infoblox.
 # La data se almacena en un JSON.
@@ -13,7 +14,7 @@ recordstoignore = []
 def dnsdata(user,pas):
 
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-    url = "https://10.40.16.107/wapi/v2.11/record:a?creator=STATIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
+    url = f"https://{infobloxip}/wapi/v2.11/record:a?creator=STATIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
     print("Extrayendo registros DNS estaticos")
     response = requests.request("GET", url, auth=(user, pas), verify=False)
     for entry in response.json()["result"]:
@@ -26,7 +27,7 @@ def dnsdata(user,pas):
         elif entry["name"] in recordstoignore:
             pass
 
-    url = "https://10.40.16.107/wapi/v2.11/record:a?creator=DYNAMIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
+    url = f"https://{infobloxip}/wapi/v2.11/record:a?creator=DYNAMIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
     print("Extrayendo registros DNS dinamicos")
     response = requests.request("GET", url, auth=(user, pas), verify=False)
     for entry in response.json()["result"]:

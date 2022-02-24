@@ -25,20 +25,14 @@ print("L3 DATA",f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar
 
 l3data(core,l3dict,user,pas)
 
-# tiempo2 = datetime.now()
-# tiempo_final = tiempo2.strftime("%H:%M:%S")
-# tiempo_ejecucion = tiempo2 - tiempo1
 print("L3 DATA", f"Total de equipos: {str(total_sw)}",sep="\n")
-# print("L3 DATA",f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",sep="\n")
 
 def main():
 
     sw_out = []
     total_sw = len(acc["ios"]) + len(acc["nxos"])
-    # tiempo1 = datetime.now()
-    # tiempo_inicial = tiempo1.strftime("%H:%M:%S")
+
     print("L2 DATA", f"Total de equipos a validar: {str(total_sw)}",sep="\n")
-    # print("L2 DATA",f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         ejecucion = {executor.submit(l2data,device,sw_out,user,pas): device for device in acc["ios"]}
@@ -55,19 +49,13 @@ def main():
     file.close()
 
     contador_out = len(sw_out)
-    # tiempo2 = datetime.now()
-    # tiempo_final = tiempo2.strftime("%H:%M:%S")
-    # tiempo_ejecucion = tiempo2 - tiempo1
+
     print("L2 DATA", f"Total de equipos: {str(total_sw)}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
-    # print("L2 DATA",f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
 
 if __name__ == "__main__":
     main()
 
-# tiempo1 = datetime.now()
-# tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print("DNS DATA",sep="\n")
-# print("DNS DATA",f"Hora de inicio: {tiempo_inicial}",sep="\n")
 
 dnsdata(user,pas)
 
@@ -75,7 +63,6 @@ tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")
 tiempo_ejecucion = tiempo2 - tiempo1
 print("DNS DATA",sep="\n")
-# print("DNS DATA",f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}",sep="\n")
 
 def dataorganizer():
 

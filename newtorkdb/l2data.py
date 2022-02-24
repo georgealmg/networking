@@ -9,7 +9,6 @@ from ntc_templates.parse import parse_output
 
 acc = {"nxos":[],"ios":[]}
 l2dict = {"nxos":{},"ios":{}}
-user ,password = None, None
 
 # El objetivo de este script es la extraccion de las tablas ARP de los distintos core de la red.
 
