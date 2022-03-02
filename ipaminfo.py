@@ -147,7 +147,7 @@ for route in l3route:
                     mac = l3arp[ip]["mac"]
                 except(KeyError):
                     mac = "--"
-                writer.writerow({"enviroment":env,"segment":route,"ip":ip,"status":status,
+                writer.writerow({"segment":route,"ip":ip,"status":status,
                 "mac":mac,"type":types,"names":names})
 
 data_file.close()
