@@ -123,7 +123,7 @@ if __name__ == "__main__":
     main()
 
 data_file = open("ipaminfo.csv","w", newline='',encoding="utf-8")
-first_row = ["enviroment","segment","ip","status","mac","type","names"]
+first_row = ["segment","ip","status","mac","type","names"]
 writer = csv.DictWriter(data_file, fieldnames=first_row, restval="Error")
 writer.writeheader()
 
