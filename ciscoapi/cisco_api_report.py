@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-# v1.0.0
+# v1.0.2
 
 import concurrent.futures, json, os
 from datetime import datetime
@@ -7,6 +7,7 @@ from devicedata import device_data, sw_list, sw_out, ios, nxos
 from getpass import getuser
 from supportapi import supportdata, header, devices, productsid
 from bugapi import bugdata, productnames
+from psirtapi import psirtdata, header, os_dict
 from pandas import read_csv, ExcelWriter
 
 try:
@@ -42,10 +43,13 @@ if __name__ == "__main__":
 
 supportdata(devices,header,productsid)
 bugdata(header,productnames)
+psirtdata(header,os_dict)
 
 df1 = read_csv("supportdata.csv", encoding='latin1', on_bad_lines="skip")
 df2 = read_csv("bugdata.csv", encoding='latin1', on_bad_lines="skip")
+df3 = read_csv("psirtdata.csv", encoding='latin1', on_bad_lines="skip")
 writer = ExcelWriter("cisco_api_report.xlsx", engine='xlsxwriter')
 df1.to_excel(writer,sheet_name="support_data",index=None,header=True,freeze_panes=(1,0))
 df2.to_excel(writer,sheet_name="bug_data",index=None,header=True,freeze_panes=(1,0))
+df3.to_excel(writer,sheet_name="cve_data",index=None,header=True,freeze_panes=(1,0))
 writer.save()
