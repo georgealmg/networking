@@ -4,7 +4,7 @@
 import concurrent.futures, json, os
 from datetime import datetime
 from devicedata import device_data, sw_list, sw_out, ios, nxos
-from getpass import getpass, getuser
+from getpass import getuser
 from supportapi import supportdata, header, devices, productsid
 from bugapi import bugdata, productnames
 from pandas import read_csv, ExcelWriter
