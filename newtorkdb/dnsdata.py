@@ -8,9 +8,6 @@ dnsdict = {}
 recordstoignore = []
 infobloxip = "x.x.x.x"
 
-# Por medio de este script se obtienen todos los registros DNS estaticos por medio de la REST API del infoblox.
-# La data se almacena en un JSON.
-
 def dnsdata(user,pas):
 
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)

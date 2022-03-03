@@ -8,13 +8,11 @@ from l3data import core, l3dict, l3data
 from l2data import l2dict, acc, l2data
 from dnsdata import dnsdata
 
-# Con este script se ejecutan los script l3, l2 y infoblox, tambien se une toda la data extraida para formar un solo JSON, este luego sera exportado a Excel.
-
 user = input("Username: ")
 pas = getpass()
 
 try:
-    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 

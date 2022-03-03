@@ -10,10 +10,6 @@ from ntc_templates.parse import parse_output
 acc = {"nxos":[],"ios":[]}
 l2dict = {"nxos":{},"ios":{}}
 
-# El objetivo de este script es la extraccion de las tablas ARP de los distintos core de la red.
-
-# Por medio de esta funcion se extrae las MAC de los equipos.
-
 def data(conn,device):
 
     if device in acc["nxos"]:

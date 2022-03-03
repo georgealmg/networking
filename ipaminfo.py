@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 #v1.0.0
 
-import concurrent.futures, csv, requests
-from getpass import getpass
+import concurrent.futures, csv, os, requests
+from getpass import getpass, getuser
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+try:
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
+except(FileNotFoundError):
+    os.chdir(os.getcwd())
 
 core = {"nxos":{},"ios":{}}
 l3arp, ipam = {}, {}
@@ -83,7 +87,7 @@ l3data(user,pas,core,l3arp,l3route)
 def ipamdata(route,dnsuser,dnspas,ipam,route_notin_infoblox):
 
     ipam[route] = {}
-    url = f"https://10.40.16.107/wapi/v2.11/ipv4address?network={route}/23&_return_as_object=1"
+    url = f"https://infobloxip/wapi/v2.11/ipv4address?network={route}/23&_return_as_object=1"
     response = requests.request("GET", url, auth=(dnsuser, dnspas), verify=False)
     try:
         for entry in response.json()["result"]:

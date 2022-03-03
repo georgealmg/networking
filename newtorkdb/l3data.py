@@ -9,10 +9,6 @@ from ntc_templates.parse import parse_output
 core = {"nxos":[], "ios":[]}
 l3dict = {"nxos":[], "ios":[]}
 
-# El objetivo de este script es la extraccion de las tablas ARP de los distintos core de la red.
-# Existen dos funciones, una para NXOS y otra para IOS, esto debido a la diferencia en los output de cada OS.
-# La data se almacena en un JSON.
-
 def l3data_nxos(core,l3dict,user,pas):
     for device in core["nxos"]:
         conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=pas)

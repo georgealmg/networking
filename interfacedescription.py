@@ -9,11 +9,8 @@ from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from napalm.base.exceptions import ConnectionException
 
-# Script creado para configurar/validar los descriptores de las interfaces de los equipos, este script extrae data de un excel para determinar que se debe configurar
-# en cuanto a descriptores, la validacion se almacena en un csv.
-
 try:
-    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
         
