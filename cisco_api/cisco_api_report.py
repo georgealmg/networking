@@ -10,7 +10,7 @@ from bugapi import bugdata, productnames
 from pandas import read_csv, ExcelWriter
 
 try:
-    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
