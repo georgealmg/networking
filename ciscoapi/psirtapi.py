@@ -106,7 +106,7 @@ def psirtdata(header,os_dict):
                     "lastUpdated":"N/A","severity":"N/A","affected_release":"N/A","first_fixed":"N/A"
                     ,"url":"N/A"})
             elif response.status_code != 200:
-                print(f"PSIRT API, HTTP error code {response.status_code}, iosxe version {id}")
+                print(f"PSIRT API, HTTP error code {response.status_code}, nxos version {id}")
 
     data_file.close()
 # psirtdata(header,os_dict)

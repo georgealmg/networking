@@ -27,10 +27,10 @@ def main():
     for output_ios in concurrent.futures.as_completed(ejecucion_ios):
         output_ios.result()
     
-    file4 = open("devicedata.json","w")
+    file = open("devicedata.json","w")
     data = json.dumps(sw_list, indent=4)
-    file4.write(data)
-    file4.close()
+    file.write(data)
+    file.close()
 
     contador_out = len(sw_out)
     tiempo2 = datetime.now()
