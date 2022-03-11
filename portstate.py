@@ -21,12 +21,17 @@ sw_out = []
 swout_file = open("sw_out.txt","w")
 swout_file.close()
 
+tiempo1 = datetime.now()
+tiempo_inicial = tiempo1.strftime("%H:%M:%S")
+total_sw = len(sw_list)
+print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
+
 data_file = open("Ports.csv","w", newline='')
 first_row = ["Hostname","Hostaddress","Port","PoE","Status","Description","VLAN"]
 writer = csv.DictWriter(data_file, fieldnames=first_row)
 writer.writeheader()
 
-def suc(conn,sw,writer):
+def ports(conn,sw,writer):
     hostname = conn.find_prompt()
     print(f"Validacion iniciada --> {hostname}.")
     power = conn.send_command("show power inline")
@@ -65,7 +70,7 @@ def suc(conn,sw,writer):
 def connection(sw):
     try:
         conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
-        suc(conn,sw,writer)
+        ports(conn,sw,writer)
     except(ConnectionRefusedError, ConnectionResetError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
@@ -87,7 +92,7 @@ def connection(sw):
     except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
-            suc(conn,sw,writer)
+            ports(conn,sw,writer)
         except(ConnectionRefusedError, ConnectionResetError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
@@ -115,25 +120,22 @@ def connection(sw):
 
 def main():
 
-    tiempo1 = datetime.now()
-    tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    total_sw = len(sw_list)
-    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
     with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
         ejecucion = {executor.submit(connection,sw): sw for sw in sw_list}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
     data_file.close()
 
-    csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
-    csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))
-    os.remove("Ports.csv")
-
-    contador_out = len(sw_out)
-    tiempo2 = datetime.now()
-    tiempo_final = tiempo2.strftime("%H:%M:%S")
-    tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total_sw)}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
-
 if __name__ == "__main__":
     main()
+
+csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
+csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))
+os.remove("Ports.csv")
+
+contador_out = len(sw_out)
+tiempo2 = datetime.now()
+tiempo_final = tiempo2.strftime("%H:%M:%S")
+tiempo_ejecucion = tiempo2 - tiempo1
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total_sw)}",
+f"Total de equipos fuera: {str(contador_out)}",sep="\n")

@@ -8,8 +8,10 @@ from l3data import core, l3dict, l3data
 from l2data import l2dict, acc, l2data
 from dnsdata import dnsdata
 
-user = input("Username: ")
-pas = getpass()
+user = input("Network username: ")
+pas = getpass(prompt="Network password: ")
+dnsuser = input("DNS username: ")
+dnspas = getpass(prompt="DNS password: ")
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
@@ -19,7 +21,7 @@ except(FileNotFoundError):
 total_sw = len(core["ios"]) + len(core["nxos"])
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-print("L3 DATA",f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
+print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}","L3 DATA",sep="\n")
 
 l3data(core,l3dict,user,pas)
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
 
 print("DNS DATA",sep="\n")
 
-dnsdata(user,pas)
+dnsdata(dnsuser,dnspas)
 
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")

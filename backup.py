@@ -15,19 +15,32 @@ except(FileNotFoundError):
 
 user = input("Username: ")
 pas = getpass()
-sw_ios = []
+sw_list = []
 sw_out = []
 swout_file = open("sw_out.txt","w")
 swout_file.close()
+
+tiempo1 = datetime.now()
+tiempo_inicial = tiempo1.strftime("%H:%M:%S")
+print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a respaldar: {str(len(sw_list))}",sep="\n")
 
 excel_file = load_workbook("Backup.xlsx")
 sheet = excel_file["Devices"]
 for ip in range(2, 999999):
     valor = sheet.cell(row=ip, column=1).value
-    if valor != None and valor not in sw_ios:
-        sw_ios.append(valor)
+    if valor != None and valor not in sw_list:
+        sw_list.append(valor)
     elif valor == None:
         break
+
+date = tiempo1.strftime("%d-%m-%y")
+try:
+    os.mkdir(f"/mnt/c/{getuser()}/Documents/Backup {date}")
+except(FileExistsError):
+    try:
+        os.mkdir(f"{os.getcwd()}/Backup {date}")
+    except(FileExistsError):
+        pass
 
 def backup(conn,date):
     hostname = conn.find_prompt()
@@ -96,30 +109,17 @@ def connection(sw,date):
         swout_file.close()
 
 def main():
-
-    tiempo1 = datetime.now()
-    tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a respaldar: {str(len(sw_ios))}",sep="\n")
-
-    date = tiempo1.strftime("%d-%m-%y")
-    try:
-        os.mkdir(f"/mnt/c/{getuser()}/Documents/Backup {date}")
-    except(FileExistsError):
-        try:
-            os.mkdir(f"{os.getcwd()}/Backup {date}")
-        except(FileExistsError):
-            pass
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        ejecucion = {executor.submit(backup,sw,date): sw for sw in sw_ios}
+        ejecucion = {executor.submit(backup,sw,date): sw for sw in sw_list}
     for output in concurrent.futures.as_completed(ejecucion):
         output.result()
 
-    tiempo2 = datetime.now()
-    tiempo_final = tiempo2.strftime("%H:%M:%S")
-    tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de configuraciones respaldadas: {str(len(sw_ios)-len(sw_out))}",
-    f"Total de equipos fuera: {str(len(sw_out))}",sep="\n")
-
 if __name__ == "__main__":
     main()
+
+tiempo2 = datetime.now()
+tiempo_final = tiempo2.strftime("%H:%M:%S")
+tiempo_ejecucion = tiempo2 - tiempo1
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de configuraciones respaldadas: {str(len(sw_list)-len(sw_out))}",
+f"Total de equipos fuera: {str(len(sw_out))}",sep="\n")

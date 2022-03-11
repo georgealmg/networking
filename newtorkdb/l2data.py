@@ -30,9 +30,6 @@ def data(conn,device):
     l2dict[env][hostname]["interfaces"] = {}
     l2dict[env][hostname]["swip"] = device
 
-    # El objetivo de este bloque de codigo es el de determinar cuales son interfaces de interconexion entre SW, de esta forma estas no se tomaran en cuenta para 
-    # la data requerida.
-
     for cdpinter in cdp:
         if "H" not in cdpinter["capability"]:
             if "Fas" in cdpinter["local_interface"]:
@@ -51,9 +48,6 @@ def data(conn,device):
                 pass
         elif "H" in cdpinter["capability"]:
             pass
-    
-    # La data obtenida se almacena en un diccionario, este se divide en ambientes y a su vez en los equipos de cada ambiente.
-    # de cada equipo se toma en cuenta si direccion IP y las interfaces con MAC
 
     if device in acc["ios"]:
         for channelsentry in channels:
@@ -93,8 +87,6 @@ def data(conn,device):
                         l2dict[env][hostname]["interfaces"][macentry["ports"]][macentry["mac"]] = "Vlan" + macentry["vlan"]
     
     conn.disconnect()
-
-# Esta funcion se usa para el manejo de las conexiones paralelas.
 
 def l2data(device,sw_out,user,pas):
     try:
@@ -150,36 +142,3 @@ def l2data(device,sw_out,user,pas):
         swout_file = open("sw_result.txt","a")
         swout_file.write(f"Error:{device}:EOF error"+"\n")
         swout_file.close()
-
-def main():
-
-    sw_out = []
-    total_sw = len(acc["nxos"]) + len(acc["ios"])
-    tiempo1 = datetime.now()
-    tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        ejecucion = {executor.submit(l2data,device,sw_out): device for device in acc["nxos"]}
-    for output in concurrent.futures.as_completed(ejecucion):
-        output.result()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        ejecucion = {executor.submit(l2data,device,sw_out): device for device in acc["ios"]}
-    for output in concurrent.futures.as_completed(ejecucion):
-        output.result()
-
-    # La data se almacena en un JSON.
-
-    file = open("l2.json","w")
-    data = json.dumps(l2dict, indent=4)
-    file.write(data)
-    file.close()
-
-    contador_out = len(sw_out)
-    tiempo2 = datetime.now()
-    tiempo_final = tiempo2.strftime("%H:%M:%S")
-    tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
-
-if __name__ == "__main__":
-    main()

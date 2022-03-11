@@ -2,6 +2,7 @@
 #v1.0.0
 
 import concurrent.futures, csv, os, requests
+from datetime import datetime
 from getpass import getpass, getuser
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException
@@ -22,6 +23,10 @@ user = input("TACACS user: ")
 pas = getpass(prompt="TACACS password: ")
 dnsuser = input("Infoblox user: ")
 dnspas = getpass(prompt="Infoblox password: ")
+
+tiempo1 = datetime.now()
+tiempo_inicial = tiempo1.strftime("%H:%M:%S")
+print(f"Hora de inicio: {tiempo_inicial}")
 
 def l3data_nxos(user,pas,core,l3arp,l3route):
     for device in core["nxos"]:
@@ -114,14 +119,14 @@ def ipamdata(route,dnsuser,dnspas,ipam,route_notin_infoblox):
 
 def main():
     
-    print("IPAM DATA", f"Cantidad de segmentos: {str(len(l3route))}",sep="\n")
+    print("IPAM DATA", f"Cantidad de segmentos a consultar: {str(len(l3route))}",sep="\n")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         ejecucion = {executor.submit(ipamdata,route,dnsuser,dnspas,ipam,route_notin_infoblox): route for route in l3route}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
 
-    print("IPAM DATA", f"Cantidad de data extraida: {str(len(l3route)-len(route_notin_infoblox))}",sep="\n")
+    print("IPAM DATA", f"Cantidad de data de segmentos obtenida: {str(len(l3route)-len(route_notin_infoblox))}",sep="\n")
 
 if __name__ == "__main__":
     main()
@@ -155,3 +160,8 @@ for route in l3route:
                 "mac":mac,"type":types,"names":names})
 
 data_file.close()
+
+tiempo2 = datetime.now()
+tiempo_final = tiempo2.strftime("%H:%M:%S")
+tiempo_ejecucion = tiempo2 - tiempo1
+print(f"Hora de finalizacion: {tiempo_final}")

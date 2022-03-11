@@ -23,6 +23,11 @@ output_file = open("output_config.txt","w")
 swout_file.close()
 output_file.close()
 
+total_sw = len(sw_list)
+tiempo1 = datetime.now()
+tiempo_inicial = tiempo1.strftime("%H:%M:%S")
+print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
+
 for ip in open("IP_validacion.txt","r"):
     sw_list.append(ip.strip("\n"))
 
@@ -94,21 +99,17 @@ def connection(sw):
 
 def main():
 
-    total_sw = len(sw_list)
-    tiempo1 = datetime.now()
-    tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-    print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
-
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         ejecucion = {executor.submit(connection,sw): sw for sw in sw_list}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
 
-    contador_out = len(sw_out)
-    tiempo2 = datetime.now()
-    tiempo_final = tiempo2.strftime("%H:%M:%S")
-    tiempo_ejecucion = tiempo2 - tiempo1
-    print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",f"Total de equipos configurados: {str(len(sw_config))}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
-
 if __name__ == "__main__":
     main()
+
+contador_out = len(sw_out)
+tiempo2 = datetime.now()
+tiempo_final = tiempo2.strftime("%H:%M:%S")
+tiempo_ejecucion = tiempo2 - tiempo1
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",
+f"Total de equipos configurados: {str(len(sw_config))}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")

@@ -8,12 +8,12 @@ dnsdict = {}
 recordstoignore = []
 infobloxip = "x.x.x.x"
 
-def dnsdata(user,pas):
+def dnsdata(dnsuser,dnspas):
 
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     url = f"https://{infobloxip}/wapi/v2.11/record:a?creator=STATIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
     print("Extrayendo registros DNS estaticos")
-    response = requests.request("GET", url, auth=(user, pas), verify=False)
+    response = requests.request("GET", url, auth=(dnsuser, dnspas), verify=False)
     for entry in response.json()["result"]:
         if entry["name"] not in recordstoignore:
             if entry["ipv4addr"] not in dnsdict.keys():
@@ -26,7 +26,7 @@ def dnsdata(user,pas):
 
     url = f"https://{infobloxip}/wapi/v2.11/record:a?creator=DYNAMIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
     print("Extrayendo registros DNS dinamicos")
-    response = requests.request("GET", url, auth=(user, pas), verify=False)
+    response = requests.request("GET", url, auth=(dnsuser, dnspas), verify=False)
     for entry in response.json()["result"]:
         if entry["name"] not in recordstoignore:
             if entry["ipv4addr"] not in dnsdict.keys():
