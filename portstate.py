@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-#v1.0.11
+#v1.1.0
 
-import csv,concurrent.futures, os, socket, time
+import csv,concurrent.futures, os, socket
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
@@ -16,8 +16,8 @@ except(FileNotFoundError):
         
 user = input("Username: ")
 pas = getpass()
-sw_list = []
-sw_out = []
+sw_list,sw_out = [],[]
+data = {}
 swout_file = open("sw_out.txt","w")
 swout_file.close()
 
@@ -31,9 +31,9 @@ first_row = ["Hostname","Hostaddress","Port","PoE","Status","Description","VLAN"
 writer = csv.DictWriter(data_file, fieldnames=first_row)
 writer.writeheader()
 
-def ports(conn,sw,writer):
+def ports(conn,sw):
     hostname = conn.find_prompt()
-    print(f"Validacion iniciada --> {hostname}.")
+    data[hostname] = []
     power = conn.send_command("show power inline")
     interface = parse_output(platform="cisco_ios",command="show interface",data=conn.send_command("show interface"))
     inter_status = parse_output(platform="cisco_ios",command="show interface status",data=conn.send_command("show interface status"))
@@ -58,8 +58,7 @@ def ports(conn,sw,writer):
                     if value["port"] == port:
                         descrip = value["descrip"]
                 try:
-                    time.sleep(1)
-                    writer.writerow({"Hostname":hostname,"Hostaddress":sw,"Port":port,"PoE":poe,"Status":status,"Description":descrip,"VLAN":vlan})
+                    data[hostname].append({"Hostname":hostname,"Hostaddress":sw,"Port":port,"PoE":poe,"Status":status,"Description":descrip,"VLAN":vlan})
                 except(UnboundLocalError):
                     pass
         else:
@@ -70,7 +69,7 @@ def ports(conn,sw,writer):
 def connection(sw):
     try:
         conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
-        ports(conn,sw,writer)
+        ports(conn,sw)
     except(ConnectionRefusedError, ConnectionResetError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
@@ -92,7 +91,7 @@ def connection(sw):
     except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
-            ports(conn,sw,writer)
+            ports(conn,sw)
         except(ConnectionRefusedError, ConnectionResetError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
@@ -128,6 +127,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+for entry in data.keys():
+    rows = data[entry]
+    writer.writerows(rows)
 
 csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
 csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))
