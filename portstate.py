@@ -63,7 +63,7 @@ def ports(conn,sw):
                     pass
         else:
             pass
-    print(f"Validacion finalizada --> {hostname}.")
+    print(f"Validacion finalizada --> {hostname}")
     conn.disconnect()
 
 def connection(sw):
@@ -123,7 +123,6 @@ def main():
         ejecucion = {executor.submit(connection,sw): sw for sw in sw_list}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
-    data_file.close()
 
 if __name__ == "__main__":
     main()
@@ -131,6 +130,7 @@ if __name__ == "__main__":
 for entry in data.keys():
     rows = data[entry]
     writer.writerows(rows)
+data_file.close()
 
 csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
 csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))

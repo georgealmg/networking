@@ -16,10 +16,8 @@ except(FileNotFoundError):
 
 user = input("Username: ")
 pas = getpass()
-sw_list = []
-nxos = []
-ios = []
-sw_out = []
+sw_list, nxos, ios, sw_out = [],[],[],[]
+data = {}
 swout_file = open("sw_out.txt","w")
 swout_file.close()
 
@@ -35,7 +33,7 @@ writer.writeheader()
 
 def swdata(conn,sw,ios,nxos,writer):
     hostname = conn.find_prompt()
-    print(f"Validacion iniciada --> {hostname}.")
+    data[hostname] = []
     uplinks = []
     description_dict = {}
     if sw in ios:
@@ -124,14 +122,14 @@ def swdata(conn,sw,ios,nxos,writer):
         elif "Vlan" in interface["port"]:
             pass
         try:
-            writer.writerow({"Hostname":hostname,"Hostaddress":sw,"Port":port,"Description":description_dict[port],"Status":status,"Duplex":duplex,"Speed":speed
+            data[hostname].append({"Hostname":hostname,"Hostaddress":sw,"Port":port,"Description":description_dict[port],"Status":status,"Duplex":duplex,"Speed":speed
         ,"SFP":sfp,"VLAN":vlan,"Mode":mode,"Channel":channel,"MAC":mac,"Config":str(config)})
             del channel
         except(UnboundLocalError):
             channel = "Standalone"
-            writer.writerow({"Hostname":hostname,"Hostaddress":sw,"Port":port,"Description":description_dict[port],"Status":status,"Duplex":duplex,"Speed":speed
+            data[hostname].append({"Hostname":hostname,"Hostaddress":sw,"Port":port,"Description":description_dict[port],"Status":status,"Duplex":duplex,"Speed":speed
         ,"SFP":sfp,"VLAN":vlan,"Mode":mode,"Channel":channel,"MAC":mac,"Config":str(config)})
-    print(f"Validacion finalizada --> {hostname}.")
+    print(f"Validacion finalizada --> {hostname}")
     conn.disconnect()
 
 def connection(sw,ios,nxos,writer):
@@ -194,14 +192,18 @@ def main():
         ejecucion = {executor.submit(connection,sw,ios,nxos,writer): sw for sw in sw_list}
     for output in concurrent.futures.as_completed(ejecucion):
             output.result()
-    data_file.close()
 
 if __name__ == "__main__":
     main()
 
-csv_file = read_csv("swdata.csv", encoding='latin1', on_bad_lines="skip")
-csv_file.to_excel(f"swdata.xlsx",index=None,header=True,freeze_panes=(1,0))
-os.remove("swdata.csv")
+for entry in data.keys():
+    rows = data[entry]
+    writer.writerows(rows)
+data_file.close()
+
+csv_file = read_csv("Ports.csv", encoding='latin1', on_bad_lines="skip")
+csv_file.to_excel(f"Ports.xlsx",index=None,header=True,freeze_panes=(1,0))
+os.remove("Ports.csv")
 
 contador_out = len(sw_out)
 tiempo2 = datetime.now()
