@@ -1,11 +1,16 @@
 #!/usr/bin/ python3
-#v1.0.0
+#v1.0.1
 
 import concurrent.futures, json, socket
 from datetime import datetime
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
+
+try:
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
+except(FileNotFoundError):
+    os.chdir(os.getcwd())
 
 acc = {"nxos":[],"ios":[]}
 l2dict = {"nxos":{},"ios":{}}
