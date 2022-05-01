@@ -31,7 +31,7 @@ first_row = ["Hostname","Hostaddress","Port","Description","Status","Duplex","Sp
 writer = csv.DictWriter(data_file, fieldnames=first_row)
 writer.writeheader()
 
-def swdata(conn,sw,ios,nxos,writer):
+def swdata(conn,sw,ios,nxos):
     hostname = conn.find_prompt()
     data[hostname] = []
     uplinks = []
@@ -138,7 +138,7 @@ def connection(sw,ios,nxos,writer):
             conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas, fast_cli= False)
         elif sw in nxos:
             conn = ConnectHandler(device_type= "cisco_nxos_ssh",host= sw,username= user,password= pas, fast_cli= False)
-        swdata(conn,sw,ios,nxos,writer)
+        swdata(conn,sw,ios,nxos)
     except(ConnectionRefusedError, ConnectionResetError):
         sw_out.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
@@ -160,7 +160,7 @@ def connection(sw,ios,nxos,writer):
     except(SSHException, NetmikoTimeoutException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas,fast_cli= False)
-            swdata(conn,sw,ios,nxos,writer)
+            swdata(conn,sw,ios,nxos)
         except(ConnectionRefusedError, ConnectionResetError):
             sw_out.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")

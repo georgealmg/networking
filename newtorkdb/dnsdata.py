@@ -3,6 +3,7 @@
 
 import json, requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 dnsdict = {}
 recordstoignore = []
@@ -10,7 +11,6 @@ infobloxip = "x.x.x.x"
 
 def dnsdata(dnsuser,dnspas):
 
-    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
     url = f"https://{infobloxip}/wapi/v2.11/record:a?creator=STATIC&_return_fields%2B=creator&_return_as_object=1&_paging=1&_max_results=10000000&view=Servidores"
     print("Extrayendo registros DNS estaticos")
     response = requests.request("GET", url, auth=(dnsuser, dnspas), verify=False)
