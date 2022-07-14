@@ -9,17 +9,15 @@ from napalm.base.exceptions import ConnectionException
         
 user = input("Username: ")
 pas = getpass()
-devices,ios,nxos,offline = [],[],[],[]
+ios,nxos,offline,Ddata = [],[],[],[],[]
 
 with open("ios.txt","r") as file:
     for ip in file:
         ios.append(ip.strip("\n"))
-        devices[ip.strip("\n")] = {}
-
 with open("nxos.txt","r") as file:
     for ip in file:
         nxos.append(ip.strip("\n"))
-        devices[ip.strip("\n")] = {}
+devices = ios+nxos
 
 offline_file = open("offline.txt","w")
 offline_file.close()
@@ -40,7 +38,7 @@ def data(conn,sw):
         elif sw in nxos:
             version = devicedata["os_version"]
             os = "nxos"
-        devices.append({"Hostname":hostname,"IP":sw,"Model":model,
+        Ddata.append({"Hostname":hostname,"IP":sw,"Model":model,
         "SerialNumber":serial_number,"OS":os,"Version":version})
 
     except(AttributeError):
