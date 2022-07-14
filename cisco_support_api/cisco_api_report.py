@@ -1,15 +1,15 @@
 # !/usr/bin/env python3
 # v1.0.4
 
-import concurrent.futures, pandas as pd, os
+import pandas as pd, os
 from bugapi import bugdata, Bdata, productnames
 from datetime import datetime
-from devicedata import device_data, Ddata, devices, offline, ios, nxos
+from devicedata import device_data, Ddata, devices, ios, nxos, offline, offline_file
 from getpass import getuser
 from supportapi import supportdata, header, supportdict
 # from psirtapi import psirtdata, header, os_dict
 from sqlalchemy import create_engine
-from tqdm import tqdm
+
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents/ciscoapi")
@@ -24,18 +24,7 @@ tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print(f"Hora de inicio: {tiempo_inicial}")
 
-def main():
-
-    with tqdm(total=len(total), desc="Extracting device data") as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor_ios:
-            ejecucion_ios = {executor_ios.submit(device_data,sw,offline,ios,nxos): sw for sw in devices}
-        for output_ios in concurrent.futures.as_completed(ejecucion_ios):
-            output_ios.result()
-            pbar.update(1)
-
-if __name__ == "__main__":
-    main()
-
+device_data(devices,ios,nxos,offline,offline_file)
 devicesdf = pd.DataFrame(Ddata)
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
