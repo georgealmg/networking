@@ -11,7 +11,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 url = "https://cloudsso.cisco.com/as/token.oauth2"
 response = requests.post(url, verify=False, data={"grant_type": "client_credentials"},
 headers={"Content-Type": "application/x-www-form-urlencoded"},
-params={"client_id":"", "client_secret":""})
+params={"client_id": "8e3ma3h3u7sfnmfn9h6nadky", "client_secret":"bqhyyPzsnjsVaW8PHcFw6TVh"})
 token = response.json()["token_type"] + " " + response.json()["access_token"]
 header = {"Authorization": token}
 Edata,SFdata,Sdata,Pdata = [],[],[],[]
@@ -54,16 +54,16 @@ def softwaredata(header,productsid,SFdata):
             url = f"https://api.cisco.com/software/suggestion/v2/suggestions/software/productIds/{id}"
             response = requests.get(url, headers=header)
             if response.status_code == 200:
-                software = response.json()["Pdata"][0]["suggestions"][0]
+                software = response.json()["productList"][0]["suggestions"][0]
                 if software["isSuggested"] == "Y":
-                    version = software["releaseFormat2"]
+                    RosVersion = software["releaseFormat2"]
                     SreleaseDate = software["releaseDate"]
                     imageName = software["images"][0]["imageName"]
                 elif software["isSuggested"] == "N":
-                    version = "Validate"
+                    RosVersion = "Validate"
                     SreleaseDate = "Validate"
                     imageName = "Validate"
-                SFdata.append({"Productid":id,"Version":version,"SoftwareReleaseDate":SreleaseDate,
+                SFdata.append({"Productid":id,"Version":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                 "ImageName":imageName})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
@@ -93,13 +93,13 @@ def serialdata(header,serialnumbers,Sdata):
                 "ContractEndDate":contractEndDate,"IsCovered":isCovered})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Sdata.append({"Serial":number,"Customer":errorMessage,
+                Sdata.append({"SerialNumber":number,"Customer":errorMessage,
                 "ContractEndDate":errorMessage,"IsCovered":errorMessage})
         pbar.update(1)
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def productdata(header,productsid):
+def productdata(header,productsid,Pdata):
 
     with tqdm(total=len(productsid), desc="Extracting product data") as pbar:
         for id in productsid:
