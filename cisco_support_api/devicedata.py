@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 user = input("Username: ")
 pas = getpass()
-ios,nxos,offline,Ddata = [],[],[],[],[]
+ios,nxos,offline,Ddata = [],[],[],[]
 
 with open("ios.txt","r") as file:
     for ip in file:
@@ -19,7 +19,6 @@ with open("nxos.txt","r") as file:
     for ip in file:
         nxos.append(ip.strip("\n"))
 devices = ios+nxos
-total = len(devices)
 offline_file = open("offline.txt","w")
 offline_file.close()
 
@@ -27,20 +26,20 @@ def data(conn,sw):
     time.sleep(1.5)
     conn.open()
     devicedata = conn.get_facts()
-    hostname,serial_number,model = devicedata["hostname"],devicedata["serial_number"],devicedata["model"]
+    hostname,serialNumber,model = devicedata["hostname"],devicedata["serial_number"],devicedata["model"]
     try:
         if sw in ios:
             osdata = re.search(r"(.+)(,)(\s)(Version )(.+)(,)(.+)",devicedata["os_version"])
-            version = osdata.group(5)
-            if int(version.split(".")[0]) >= 16:
-                os = "iosxe"
+            osVersion = osdata.group(5)
+            if int(osVersion.split(".")[0]) >= 16:
+                osFamily = "iosxe"
             else:
-                os = "ios"
+                osFamily = "ios"
         elif sw in nxos:
-            version = devicedata["os_version"]
-            os = "nxos"
+            osVersion = devicedata["os_version"]
+            osFamily = "nxos"
         Ddata.append({"Hostname":hostname,"IP":sw,"Model":model,
-        "SerialNumber":serial_number,"OS":os,"Version":version})
+        "SerialNumber":serialNumber,"OS":osFamily,"Version":osVersion})
 
     except(AttributeError):
         offline_file = open("offline.txt","a")
@@ -52,7 +51,7 @@ def data(conn,sw):
         offline_file.close()
     conn.close()
 
-def connection(sw,offline_file,ios,nxos):
+def connection(sw,ios,nxos,offline,offline_file):
     try:
         if sw in ios:
             driver = get_network_driver("ios")
@@ -72,7 +71,6 @@ def connection(sw,offline_file,ios,nxos):
         offline_file.close()
     except(AuthenticationException):
         offline.append(sw)
-        print(f"Error:{sw}:Authentication error")
         offline_file = open("offline.txt","a")
         offline_file.write(f"Error:{sw}:Authentication error"+"\n")
         offline_file.close()
@@ -84,19 +82,16 @@ def connection(sw,offline_file,ios,nxos):
             data(conn,sw)
         except(ConnectionRefusedError, ConnectionResetError):
             offline.append(sw)
-            print(f"Error:{sw}:ConnectionRefused error")
             offline_file = open("offline.txt","a")
             offline_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             offline_file.close()
         except(TimeoutError, socket.timeout):
             offline.append(sw)
             print(f"Error:{sw}:Timeout error")
-            offline_file = open("offline.txt","a")
             offline_file.write(f"Error:{sw}:Timeout error"+"\n")
             offline_file.close()
         except(AuthenticationException):
             offline.append(sw)
-            print(f"Error:{sw}:Authentication error")
             offline_file = open("offline.txt","a")
             offline_file.write(f"Error:{sw}:Authentication error"+"\n")
             offline_file.close()
@@ -110,7 +105,7 @@ def connection(sw,offline_file,ios,nxos):
 
 def device_data(devices,ios,nxos,offline,offline_file):
 
-    with tqdm(total=len(total), desc="Extracting device data") as pbar:
+    with tqdm(total=len(devices), desc="Extracting device data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
             ejecucion = {executor.submit(connection,sw,ios,nxos,offline,offline_file): sw for sw in devices}
         for output_ios in concurrent.futures.as_completed(ejecucion):
