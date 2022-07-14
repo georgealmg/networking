@@ -12,12 +12,11 @@ from sqlalchemy import create_engine
 
 
 try:
-    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/ciscoapi")
+    os.chdir(f"/mnt/c/Users/{getuser()}/Documents/cisco_support_api")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
-
-engine = create_engine("mysql+pymysql://root:pr0gr4m_SQL@172.25.192.1/ciscoapi")
+engine = create_engine("mysql+pymysql://root:pr0gr4m@172.31.192.1/ciscoapi")
 
 total = len(devices)
 tiempo1 = datetime.now()
@@ -28,15 +27,15 @@ device_data(devices,ios,nxos,offline,offline_file)
 devicesdf = pd.DataFrame(Ddata)
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
-supportdata(devices,header,supportdict)
+supportdata(devicesdf,header,supportdict)
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
 eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
 softwaredf = pd.DataFrame(supportdict["softwaredata"])
 softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 serialdf = pd.DataFrame(supportdict["serialdata"])
-serialdf.to_sql('serial', con=engine ,index=False ,if_exists="replace")
+serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
-productdf.to_sql('product', con=engine ,index=False ,if_exists="replace")
+productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
 bugdata(header,productnames,devicesdf,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
