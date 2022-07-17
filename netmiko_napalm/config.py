@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-#v1.0.1
+#v1.0.2
 
 import concurrent.futures, os, socket
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException
+from tqdm import tqdm
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
@@ -14,102 +15,101 @@ except(FileNotFoundError):
 
 user = input("Username: ")
 pas = getpass()
-sw_list = []
-sw_out = []
-sw_config = []
 commands = []
-swout_file = open("sw_result.txt","w")
-output_file = open("output_config.txt","w")
-swout_file.close()
-output_file.close()
+devices,offline,configured = [],[],[]
+result = open("result.txt","w")
+output = open("output.txt","w")
+result.close()
+output.close()
 
-total_sw = len(sw_list)
+total = len(devices)
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
-print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a validar: {str(total_sw)}",sep="\n")
+print(f"Hora de inicio: {tiempo_inicial}",f"Total de equipos a configurar: {str(total)}",sep="\n")
 
 for ip in open("IP_validacion.txt","r"):
-    sw_list.append(ip.strip("\n"))
+    devices.append(ip.strip("\n"))
 
-def config(sw,conn,sw_config,commands):
+def config(sw,conn,configured,commands):
     hostname = conn.find_prompt()
     print(f"Configuracion iniciada --> {hostname}")
     output = conn.send_config_set(commands)
-    output_file = open("output_config.txt","a")
-    output_file.write(output+"\n")
-    output_file.close()
+    output = open("output.txt","a")
+    output.write(output+"\n")
+    output.close()
     conn.save_config()
-    sw_config.append(sw)
-    swout_file = open("sw_result.txt","a")
-    swout_file.write(f"OK:{sw}:Configurado"+"\n")
-    swout_file.close()
+    configured.append(sw)
+    result = open("result.txt","a")
+    result.write(f"OK:{sw}:Configurado"+"\n")
+    result.close()
     print(f"Configuracion finalizada --> {hostname}")
     conn.disconnect()
 
 def connection(sw):
     try:
         conn = ConnectHandler(device_type= "cisco_ios_ssh",host= sw,username= user,password= pas)
-        config(sw,conn,sw_config,commands)
+        config(sw,conn,configured,commands)
     except(ConnectionRefusedError, ConnectionResetError):
-        sw_out.append(sw)
+        offline.append(sw)
         print(f"Error:{sw}:ConnectionRefused error")
-        swout_file = open("sw_result.txt","a")
-        swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
-        swout_file.close()
+        result = open("result.txt","a")
+        result.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+        result.close()
     except(TimeoutError, socket.timeout):
-        sw_out.append(sw)
+        offline.append(sw)
         print(f"Error:{sw}:Timeout error")
-        swout_file = open("sw_result.txt","a")
-        swout_file.write(f"Error:{sw}:Timeout error"+"\n")
-        swout_file.close()
+        result = open("result.txt","a")
+        result.write(f"Error:{sw}:Timeout error"+"\n")
+        result.close()
     except(AuthenticationException):
-        sw_out.append(sw)
+        offline.append(sw)
         print(f"Error:{sw}:Authenticacion error")
-        swout_file = open("sw_result.txt","a")
-        swout_file.write(f"Error:{sw}:Authenticacion error"+"\n")
-        swout_file.close()
+        result = open("result.txt","a")
+        result.write(f"Error:{sw}:Authenticacion error"+"\n")
+        result.close()
     except(SSHException):
         try:
             conn = ConnectHandler(device_type= "cisco_ios_telnet",host= sw,username= user,password= pas)
-            config(sw,conn,sw_config,commands)
+            config(sw,conn,configured,commands)
         except(ConnectionRefusedError, ConnectionResetError):
-            sw_out.append(sw)
+            offline.append(sw)
             print(f"Error:{sw}:ConnectionRefused error")
-            swout_file = open("sw_result.txt","a")
-            swout_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
-            swout_file.close()
+            result = open("result.txt","a")
+            result.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+            result.close()
         except(TimeoutError, socket.timeout):
-            sw_out.append(sw)
+            offline.append(sw)
             print(f"Error:{sw}:Timeout error")
-            swout_file = open("sw_result.txt","a")
-            swout_file.write(f"Error:{sw}:Timeout error"+"\n")
-            swout_file.close()
+            result = open("result.txt","a")
+            result.write(f"Error:{sw}:Timeout error"+"\n")
+            result.close()
         except(AuthenticationException):
-            sw_out.append(sw)
+            offline.append(sw)
             print(f"Error:{sw}:Authenticacion error")
-            swout_file = open("sw_result.txt","a")
-            swout_file.write(f"Error:{sw}:Authenticacion error"+"\n")
-            swout_file.close()
+            result = open("result.txt","a")
+            result.write(f"Error:{sw}:Authenticacion error"+"\n")
+            result.close()
     except(EOFError):
-        sw_out.append(sw)
+        offline.append(sw)
         print(f"Error:{sw}:EOF error")
-        swout_file = open("sw_result.txt","a")
-        swout_file.write(f"Error:{sw}:EOF error"+"\n")
-        swout_file.close()
+        result = open("result.txt","a")
+        result.write(f"Error:{sw}:EOF error"+"\n")
+        result.close()
 
 def main():
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        ejecucion = {executor.submit(connection,sw): sw for sw in sw_list}
-    for output in concurrent.futures.as_completed(ejecucion):
+    with tqdm(total=total,desc="Configuring devices") as pbar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            ejecucion = {executor.submit(connection,sw): sw for sw in devices}
+        for output in concurrent.futures.as_completed(ejecucion):
             output.result()
+        pbar.update(1)
 
 if __name__ == "__main__":
     main()
 
-contador_out = len(sw_out)
+contador_out = len(offline)
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")
 tiempo_ejecucion = tiempo2 - tiempo1
-print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total_sw)}",
-f"Total de equipos configurados: {str(len(sw_config))}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos: {str(total)}",
+f"Total de equipos configurados: {str(len(configured))}",f"Total de equipos fuera: {str(contador_out)}",sep="\n")
