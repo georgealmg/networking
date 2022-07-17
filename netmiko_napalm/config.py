@@ -32,7 +32,6 @@ for ip in open("IP_validacion.txt","r"):
 
 def config(sw,conn,configured,commands):
     hostname = conn.find_prompt()
-    print(f"Configuracion iniciada --> {hostname}")
     output = conn.send_config_set(commands)
     output = open("output.txt","a")
     output.write(output+"\n")
@@ -42,7 +41,6 @@ def config(sw,conn,configured,commands):
     result = open("result.txt","a")
     result.write(f"OK:{sw}:Configurado"+"\n")
     result.close()
-    print(f"Configuracion finalizada --> {hostname}")
     conn.disconnect()
 
 def connection(sw):
@@ -51,19 +49,16 @@ def connection(sw):
         config(sw,conn,configured,commands)
     except(ConnectionRefusedError, ConnectionResetError):
         offline.append(sw)
-        print(f"Error:{sw}:ConnectionRefused error")
         result = open("result.txt","a")
         result.write(f"Error:{sw}:ConnectionRefused error"+"\n")
         result.close()
     except(TimeoutError, socket.timeout):
         offline.append(sw)
-        print(f"Error:{sw}:Timeout error")
         result = open("result.txt","a")
         result.write(f"Error:{sw}:Timeout error"+"\n")
         result.close()
     except(AuthenticationException):
         offline.append(sw)
-        print(f"Error:{sw}:Authenticacion error")
         result = open("result.txt","a")
         result.write(f"Error:{sw}:Authenticacion error"+"\n")
         result.close()
@@ -73,25 +68,21 @@ def connection(sw):
             config(sw,conn,configured,commands)
         except(ConnectionRefusedError, ConnectionResetError):
             offline.append(sw)
-            print(f"Error:{sw}:ConnectionRefused error")
             result = open("result.txt","a")
             result.write(f"Error:{sw}:ConnectionRefused error"+"\n")
             result.close()
         except(TimeoutError, socket.timeout):
             offline.append(sw)
-            print(f"Error:{sw}:Timeout error")
             result = open("result.txt","a")
             result.write(f"Error:{sw}:Timeout error"+"\n")
             result.close()
         except(AuthenticationException):
             offline.append(sw)
-            print(f"Error:{sw}:Authenticacion error")
             result = open("result.txt","a")
             result.write(f"Error:{sw}:Authenticacion error"+"\n")
             result.close()
     except(EOFError):
         offline.append(sw)
-        print(f"Error:{sw}:EOF error")
         result = open("result.txt","a")
         result.write(f"Error:{sw}:EOF error"+"\n")
         result.close()
