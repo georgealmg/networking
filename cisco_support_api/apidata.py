@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-# v1.0.5
+# v1.0.6
 
 import pandas as pd, os
 from bugapi import bugdata, Bdata, productnames
@@ -7,9 +7,8 @@ from datetime import datetime
 from devicedata import device_data, Ddata, devices, ios, nxos, offline, offline_file
 from getpass import getuser
 from supportapi import supportdata, header, supportdict
-# from psirtapi import psirtdata, header, os_dict
+from psirtapi import psirtdata, header, osdict, OSdata
 from sqlalchemy import create_engine
-
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents/cisco_support_api")
@@ -37,23 +36,18 @@ serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
-bugdata(header,productnames,devicesdf,productdf,Bdata)
+bugdata(devicesdf,header,productnames,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
-# psirtdata(header,os_dict)
+psirtdata(devicesdf,header,osdict,OSdata)
+psirtdf = pd.DataFrame(OSdata)
+psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
 
-# df3 = read_csv("psirtdata.csv", encoding='latin1', on_bad_lines="skip")
-# writer = ExcelWriter("cisco_api_report.xlsx", engine='xlsxwriter')
-# df3.to_excel(writer,sheet_name="cve_data",index=None,header=True,freeze_panes=(1,0))
-# writer.save()
-
-# os.remove("psirtdata.csv")
-
-# contador_out = len(sw_out)
-# tiempo2 = datetime.now()
-# tiempo_final = tiempo2.strftime("%H:%M:%S")
-# tiempo_ejecucion = tiempo2 - tiempo1
-# total_off = len(offline)
-# print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total_sw)}",
-# f"Total de equipos fuera: {str(contador_out)}",sep="\n")
+total_out = len(offline)
+tiempo2 = datetime.now()
+tiempo_final = tiempo2.strftime("%H:%M:%S")
+tiempo_ejecucion = tiempo2 - tiempo1
+total_off = len(offline)
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total)-str(total_out)}",
+f"Total de equipos fuera: {str(total_out)}",sep="\n")
