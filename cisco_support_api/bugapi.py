@@ -18,7 +18,7 @@ Bdata = []
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def bugdata(header,productnames,devicesdf,productdf,Bdata):
+def bugdata(devicesdf,header,productnames,productdf,Bdata):
 
     for entry in devicesdf.to_list():
         try:
