@@ -95,7 +95,7 @@ def serialdata(header,serialnumbers,Sdata):
                 errorMessage = "HTTPError:"+str(response.status_code)
                 Sdata.append({"SerialNumber":number,"Customer":errorMessage,
                 "ContractEndDate":errorMessage,"IsCovered":errorMessage})
-        pbar.update(1)
+            pbar.update(1)
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
@@ -117,7 +117,7 @@ def productdata(header,productsid,Pdata):
                 errorMessage = "HTTPError:"+str(response.status_code)
                 Pdata.append({"Productid":id,"ProductReleaseDate":errorMessage,"ProductType":errorMessage,
                 "ProductSeries":errorMessage,"ProductName":errorMessage})
-        pbar.update(1)
+            pbar.update(1)
 
 def supportdata(devicesdf,header,supportdict):
 
