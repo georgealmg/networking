@@ -11,14 +11,6 @@ from tqdm import tqdm
 user = input("Username: ")
 pas = getpass()
 ios,nxos,offline,Ddata = [],[],[],[]
-
-with open("ios.txt","r") as file:
-    for ip in file:
-        ios.append(ip.strip("\n"))
-with open("nxos.txt","r") as file:
-    for ip in file:
-        nxos.append(ip.strip("\n"))
-devices = ios+nxos
 offline_file = open("offline.txt","w")
 offline_file.close()
 
