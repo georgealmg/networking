@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 #v1.0.2
 
-import concurrent.futures, json, os, requests
-from getpass import getuser
+import concurrent.futures, json, requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from tqdm import tqdm
 
