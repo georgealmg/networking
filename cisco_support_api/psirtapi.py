@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #v1.0.3
 
+from pprint import pprint
 import requests
 from ratelimit import RateLimitException, limits
 from backoff import on_exception, expo
@@ -37,89 +38,33 @@ def psirtdata(devicesdf,header,osdict,OSdata):
         except(KeyError):
             pass
     
-    with tqdm(total=len(osdict.values()), desc="Extracting psirt data") as pbar:
-        if "ios" in osdict.keys(): 
-            for version in osdict["ios"]:
-                url = f"https://api.cisco.com/security/advisories/ios?version={version}"
+    total = 0
+    for os in osdict.keys():
+        total = total + len(osdict[os])
+    with tqdm(total=total, desc="Extracting psirt data") as pbar:
+        for os in osdict.keys(): 
+            for version in osdict[os]:
+                url = f"https://api.cisco.com/security/advisories/{os}?version={version}"
                 response = requests.get(url, headers=header)
                 if response.status_code == 200:
                     psirt = response.json()
                     if "errorCode" not in psirt.keys():
                         psirt = response.json()["advisories"]
                         for entry in psirt:
-                            OSdata.append({"OSfamily":"ios","OSversion":version,"bug_id":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
+                            OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
                             ,"cwe":str(entry["cwe"]),"cveVersion":entry["version"],"status":entry["status"],"firstPublished":entry["firstPublished"],
                             "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"affected_release":str(entry["iosRelease"]),"first_fixed":str(entry["firstFixed"])
                             ,"url":entry["publicationUrl"]})
                     elif "errorCode" in psirt.keys():
-                            OSdata.append({"OSfamily":"ios","OSversion":version,"bug_id":"N/A","advisoryTitle":"N/A","cves":"N/A"
+                            OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":"N/A","advisoryTitle":"N/A","cves":"N/A"
                             ,"cwe":"N/A","cveVersion":"N/A","status":"N/A","firstPublished":"N/A",
                             "lastUpdated":"N/A","severity":"N/A","affected_release":"N/A","first_fixed":"N/A"
                             ,"url":"N/A"})
-                    elif response.status_code != 200:
-                        errorMessage = "HTTPError:"+str(response.status_code)
-                        OSdata.append({"OSfamily":"ios","OSversion":version,"bug_id":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
-                        ,"cwe":errorMessage,"cveVersion":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
-                        "lastUpdated":errorMessage,"severity":errorMessage,"affected_release":errorMessage,"first_fixed":errorMessage
-                        ,"url":errorMessage})
-        elif "ios" not in osdict.keys():
-            pass
+                elif response.status_code != 200:
+                    errorMessage = "HTTPError:"+str(response.status_code)
+                    OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
+                    ,"cwe":errorMessage,"cveVersion":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
+                    "lastUpdated":errorMessage,"severity":errorMessage,"affected_release":errorMessage,"first_fixed":errorMessage
+                    ,"url":errorMessage})
         
-        if "iosxe" in osdict.keys():
-            for version in osdict["iosxe"]:
-                url = f"https://api.cisco.com/security/advisories/iosxe?version={version}"
-                response = requests.get(url, headers=header)
-                if response.status_code == 200:
-                    psirt = response.json()
-                    if "errorCode" not in psirt.keys():
-                        psirt = response.json()["advisories"]
-                        for entry in psirt:
-                            OSdata.append({"OSfamily":"iosxe","OSversion":version,"bug_id":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
-                            ,"cwe":str(entry["cwe"]),"cveVersion":entry["version"],"status":entry["status"],"firstPublished":entry["firstPublished"],
-                            "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"affected_release":str(entry["iosRelease"]),"first_fixed":str(entry["firstFixed"])
-                            ,"url":entry["publicationUrl"]})
-                    elif "errorCode" in psirt.keys():
-                            OSdata.append({"OSfamily":"iosxe","OSversion":version,"bug_id":"N/A","advisoryTitle":"N/A","cves":"N/A"
-                            ,"cwe":"N/A","cveVersion":"N/A","status":"N/A","firstPublished":"N/A",
-                            "lastUpdated":"N/A","severity":"N/A","affected_release":"N/A","first_fixed":"N/A"
-                            ,"url":"N/A"})
-                    elif response.status_code != 200:
-                        errorMessage = "HTTPError:"+str(response.status_code)
-                        OSdata.append({"OSfamily":"ios","OSversion":version,"bug_id":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
-                        ,"cwe":errorMessage,"cveVersion":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
-                        "lastUpdated":errorMessage,"severity":errorMessage,"affected_release":errorMessage,"first_fixed":errorMessage
-                        ,"url":errorMessage})
-        elif "iosxe" not in osdict.keys():
-            pass
-
-        if "nxos" in osdict.keys():
-            for version in osdict["nxos"]:
-                url = f"https://api.cisco.com/security/advisories/nxos?version={version}"
-                response = requests.get(url, headers=header)
-                if response.status_code == 200:
-                    psirt = response.json()
-                    if "errorCode" not in psirt.keys():
-                        psirt = response.json()["advisories"]
-                        for entry in psirt:
-                            first_fixed = []
-                            for id in entry["platforms"]:
-                                first_fixed.append(id["name"]+" os: "+id["firstFixes"][0]["name"])
-                            OSdata.append({"OSfamily":"nxos","OSversion":version,"bug_id":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
-                            ,"cwe":str(entry["cwe"]),"cveVersion":entry["version"],"status":entry["status"],"firstPublished":entry["firstPublished"],
-                            "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"affected_release":str(entry["iosRelease"]),"first_fixed":str(entry["firstFixed"])
-                            ,"url":entry["publicationUrl"]})
-                    elif "errorCode" in psirt.keys():
-                            OSdata.append({"OSfamily":"nxos","OSversion":version,"bug_id":"N/A","advisoryTitle":"N/A","cves":"N/A"
-                            ,"cwe":"N/A","cveVersion":"N/A","status":"N/A","firstPublished":"N/A",
-                            "lastUpdated":"N/A","severity":"N/A","affected_release":"N/A","first_fixed":"N/A"
-                            ,"url":"N/A"})
-                    elif response.status_code != 200:
-                        errorMessage = "HTTPError:"+str(response.status_code)
-                        OSdata.append({"OSfamily":"ios","OSversion":version,"bug_id":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
-                        ,"cwe":errorMessage,"cveVersion":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
-                        "lastUpdated":errorMessage,"severity":errorMessage,"affected_release":errorMessage,"first_fixed":errorMessage
-                        ,"url":errorMessage})
-        elif "nxos" not in osdict.keys():
-            pass
-        
-        pbar.update(1)
+                pbar.update(1)
