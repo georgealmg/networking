@@ -79,7 +79,7 @@ def connection(sw,ios,nxos,offline,offline_file):
             offline_file.close()
         except(TimeoutError, socket.timeout):
             offline.append(sw)
-            print(f"Error:{sw}:Timeout error")
+            offline_file = open("offline.txt","a")
             offline_file.write(f"Error:{sw}:Timeout error"+"\n")
             offline_file.close()
         except(AuthenticationException):
@@ -89,7 +89,6 @@ def connection(sw,ios,nxos,offline,offline_file):
             offline_file.close()
     except(EOFError):
         offline.append(sw)
-        print(f"Error:{sw}:EOF error")
         offline_file = open("offline.txt","a")
         offline_file.write(f"Error:{sw}:EOF error"+"\n")
         offline_file.close()

@@ -37,11 +37,11 @@ def eoxdata(header,productsid,Edata):
                     LastDateOfSupport = eox["LastDateOfSupport"]["value"]
                     EOXMigrationDetails = eox["EOXMigrationDetails"]["MigrationProductId"]
                     pass
-                Edata.append({"Productid":id,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSuppor":LastDateOfSupport,
+                Edata.append({"Productid":id,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSupport":LastDateOfSupport,
                 "EOXMigrationDetails":EOXMigrationDetails})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Edata.append({"Productid":id,"EndOfSaleDate":errorMessage,"LastDateOfSuppor":errorMessage,
+                Edata.append({"Productid":id,"EndOfSaleDate":errorMessage,"LastDateOfSupport":errorMessage,
                 "EOXMigrationDetails":errorMessage})
             pbar.update(1)
 

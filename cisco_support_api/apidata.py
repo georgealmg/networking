@@ -15,6 +15,9 @@ try:
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
+engine = create_engine("mysql+pymysql://root:pr0gr4m@172.25.16.1/ciscoapi")
+conn = engine.connect()
+
 with open("ios.txt","r") as file:
     for ip in file:
         ios.append(ip.strip("\n"))
@@ -22,8 +25,6 @@ with open("nxos.txt","r") as file:
     for ip in file:
         nxos.append(ip.strip("\n"))
 devices = ios+nxos
-
-engine = create_engine("mysql+pymysql://root:pr0gr4m@172.25.16.1/ciscoapi")
 
 total = len(devices)
 tiempo1 = datetime.now()
@@ -52,10 +53,10 @@ psirtdata(devicesdf,header,osdict,OSdata)
 psirtdf = pd.DataFrame(OSdata)
 psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
 
+conn.close()
 total_out = len(offline)
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")
 tiempo_ejecucion = tiempo2 - tiempo1
-total_off = len(offline)
 print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total-total_out)}",
 f"Total de equipos fuera: {str(total_out)}",sep="\n")
