@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.7
+#v1.0.2
 
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException
@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 core = {"nxos":[], "ios":[]}
 
+# This script will retrieve the arp tables.
 def l3data_nxos(user,pas,core,l3df):
 
     with tqdm(total=len(core["nxos"]),desc="L3data nxos") as pbar:

@@ -1,5 +1,5 @@
 #!/usr/bin/ python3
-#v1.0.9
+#v1.0.2
 
 import concurrent.futures, os, socket
 from getpass import getuser
@@ -20,6 +20,7 @@ ios,nxos = [],[]
 l2df = []
 devices = ios+nxos
 
+# This script will retrieve all the mac addresses learned in by the switches, it will exclude the macs learned via uplinks.
 def data(conn,device,l2df,pbar):
 
     hostname = conn.find_prompt()

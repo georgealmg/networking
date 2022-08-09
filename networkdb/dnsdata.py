@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.7
+#v1.0.2
 
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -8,6 +8,7 @@ from tqdm import tqdm
 dnsdict = {}
 recordstoignore = []
 
+# This script will retrieve all dynamic & static A records configured in the Infoblox server.
 def dnsdata(dnsuser,dnspas,recordstoignore,dnsdict):
 
     with tqdm(total=2,desc="DNSdata") as pbar:

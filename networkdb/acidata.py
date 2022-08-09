@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-#v1.0.4
+#v1.0.2
 
 import concurrent.futures, json, os, requests
 from getpass import getuser
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from tqdm import tqdm
 
-try:
-    os.chdir("C:/Python")
-except(FileNotFoundError):
-    try:
-        os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
-    except(FileNotFoundError):
-        os.chdir(os.getcwd())
-
 apics = {"APIC1":{},"APC2":{}}
 headers = {"Content-Type":"application/json"}
 cookie,nodes = {},{}
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+# This method is used to generate the cookie required for all API calls.
 def apic_cookie(apic,headers,payload):
     url = f"https://{apic}/api/aaaLogin.json"
     response = requests.request("POST", url, headers=headers, data=payload, verify=False)
@@ -30,6 +23,7 @@ def apic_cookie(apic,headers,payload):
     elif response.status_code != 200:
         raise(requests.HTTPError(response.text))
 
+# This method is used to get a list of pods configured in each ACI fabric.
 def apic_pods(apic,response):
     response = response.json()
     apics[apic]["pods"] = {}
@@ -37,6 +31,8 @@ def apic_pods(apic,response):
         id = entry["fabricPod"]["attributes"]["id"]
         apics[apic]["pods"][id] = ""
 
+# This method is used to get a list of devices configured in each of the pods of the ACI fabric.
+# Said list will be used to replace the node id with the node hostname.
 def apic_devices(response):
     response = response.json()
     for entry in response["imdata"]:
@@ -44,6 +40,7 @@ def apic_devices(response):
         id = entry["fabricNode"]["attributes"]["id"]
         nodes[id] = name
 
+# This method will call the other methods and will also get a list of all endpoints in the ACI fabric.
 def aci_ep(apic,headers,payload,acidf):
     
     url = f"https://{apic}/api/node/class/fabricPod.json"
