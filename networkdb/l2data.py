@@ -1,40 +1,36 @@
 #!/usr/bin/ python3
-#v1.0.1
+#v1.0.9
 
-import concurrent.futures, json, socket
-from datetime import datetime
+import concurrent.futures, os, socket
+from getpass import getuser
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
+from tqdm import tqdm
 
 try:
-    os.chdir(f"/mnt/c/Users/{getuser()}/Documents")
+    os.chdir("C:/Python")
 except(FileNotFoundError):
-    os.chdir(os.getcwd())
+    try:
+        os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
+    except(FileNotFoundError):
+        os.chdir(os.getcwd())
 
-acc = {"nxos":[],"ios":[]}
-l2dict = {"nxos":{},"ios":{}}
+ios,nxos = [],[]
+l2df = []
+devices = ios+nxos
 
-def data(conn,device):
+def data(conn,device,l2df,pbar):
 
-    if device in acc["nxos"]:
-        env = "nxos"
-    elif device in acc["ios"]:
-        env = "ios"
-    
-    uplinks = []
-    if device in acc["ios"]:
+    hostname = conn.find_prompt()
+    if device in ios:
         channels = parse_output(platform="cisco_ios",command="show etherchannel summary",data=conn.send_command("show etherchannel summary"))
         cdp = parse_output(platform="cisco_ios",command="show cdp neighbors",data=conn.send_command("show cdp neighbors"))
-    elif device in acc["nxos"]:
+    elif device in nxos:
         channels = parse_output(platform="cisco_nxos",command="show port-channel summary",data=conn.send_command("show port-channel summary"))
         cdp = parse_output(platform="cisco_nxos",command="show cdp neighbors",data=conn.send_command("show cdp neighbors"))
-    hostname = conn.find_prompt()
-    print(f"Extrayendo data l2 --> {hostname}")
-    l2dict[env][hostname] = {}
-    l2dict[env][hostname]["interfaces"] = {}
-    l2dict[env][hostname]["swip"] = device
-
+    
+    uplinks = []
     for cdpinter in cdp:
         if "H" not in cdpinter["capability"]:
             if "Fas" in cdpinter["local_interface"]:
@@ -54,7 +50,7 @@ def data(conn,device):
         elif "H" in cdpinter["capability"]:
             pass
 
-    if device in acc["ios"]:
+    if device in ios:
         for channelsentry in channels:
             for physinter in channelsentry["interfaces"]:
                 if physinter in uplinks:
@@ -69,81 +65,85 @@ def data(conn,device):
             elif "GigabitEthernet" in dstport:
                 dstport = macentry["destination_port"][0].replace("GigabitEthernet","Gi")
             if dstport not in uplinks and ("CPU" not in dstport and "Switch" not in dstport):
-                if dstport not in l2dict[env][hostname]["interfaces"]: 
-                    l2dict[env][hostname]["interfaces"][dstport] = {}
-                    l2dict[env][hostname]["interfaces"][dstport][macentry["destination_address"]] = "Vlan" + macentry["vlan"]
-                elif dstport in l2dict[env][hostname]["interfaces"]: 
-                    l2dict[env][hostname]["interfaces"][dstport][macentry["destination_address"]] = "Vlan" + macentry["vlan"]
-    elif device in acc["nxos"]:
+                l2df.append({"sw":hostname,"ip":device,"interface":dstport,"mac":macentry["destination_address"],
+                "vlan":"Vlan"+macentry["vlan"]})
+    elif device in nxos:
         for channelsentry in channels:
             for physinter in channelsentry["phys_iface"]:
                 if physinter in uplinks:
                     uplinks.append(channelsentry["bundle_iface"])
         vlanmac = parse_output(platform="cisco_nxos",command="show mac address-table",data=conn.send_command("show mac address-table"))
         for macentry in vlanmac:
-            if "vPC" in macentry["ports"] or "sup-eth" in macentry["ports"]:
-                pass
-            elif "vPC" not in macentry["ports"] or "sup-eth" not in macentry["ports"]:
+            if "vPC" not in macentry["ports"] or "sup-eth" not in macentry["ports"]:
                 if macentry["ports"] not in uplinks:
-                    if macentry["ports"] not in l2dict[env][hostname]["interfaces"]:
-                        l2dict[env][hostname]["interfaces"][macentry["ports"]] = {}
-                        l2dict[env][hostname]["interfaces"][macentry["ports"]][macentry["mac"]] = "Vlan" + macentry["vlan"]
-                    elif macentry["ports"] in l2dict[env][hostname]["interfaces"]:
-                        l2dict[env][hostname]["interfaces"][macentry["ports"]][macentry["mac"]] = "Vlan" + macentry["vlan"]
+                    l2df.append({"sw":hostname,"ip":device,"interface":macentry["ports"],"mac":macentry["mac"],
+                    "vlan":"Vlan"+macentry["vlan"]})
     
     conn.disconnect()
+    pbar.update(1)
 
-def l2data(device,sw_out,user,pas):
+def connection(user,pas,device,l2df,pbar):
     try:
-        if device in acc["ios"]:
-            conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=pas)
-            data(conn,device)
-        elif device in acc["nxos"]:
-            conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=pas)
-            data(conn,device)
+        if device in ios:
+            conn = ConnectHandler(device_type="cisco_ios_ssh" ,host=device ,username=user ,password=pas , fast_cli= False)
+            data(conn,device,l2df,pbar)
+        elif device in nxos:
+            conn = ConnectHandler(device_type="cisco_nxos_ssh" ,host=device ,username=user ,password=pas , fast_cli= False)
+            data(conn,device,l2df,pbar)
     except(ConnectionRefusedError, ConnectionResetError):
-        sw_out.append(device)
-        print(f"Error:{device}:ConnectionRefused error")
-        swout_file = open("sw_result.txt","a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{device}:ConnectionRefused error"+"\n")
         swout_file.close()
+        pbar.update(1)
     except(TimeoutError, socket.timeout):
-        sw_out.append(device)
-        print(f"Error:{device}:Timeout error")
-        swout_file = open("sw_result.txt","a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{device}:Timeout error"+"\n")
         swout_file.close()
+        pbar.update(1)
     except(AuthenticationException):
-        sw_out.append(device)
-        print(f"Error:{device}:Authenticacion error")
-        swout_file = open("sw_result.txt","a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{device}:Authenticacion error"+"\n")
         swout_file.close()
+        pbar.update(1)
     except(SSHException, NetmikoTimeoutException):
         try:
-            conn = ConnectHandler(device_type="cisco_ios_telnet" ,host=device ,username=user ,password=pas)
+            conn = ConnectHandler(device_type="cisco_ios_telnet" ,host=device ,username=user ,password=pas , fast_cli= False)
             data(conn,device)
         except(ConnectionRefusedError, ConnectionResetError):
-            sw_out.append(device)
-            print(f"Error:{device}:ConnectionRefused error")
-            swout_file = open("sw_result.txt","a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{device}:ConnectionRefused error"+"\n")
             swout_file.close()
+            pbar.update(1)
         except(TimeoutError, socket.timeout):
-            sw_out.append(device)
-            print(f"Error:{device}:Timeout error")
-            swout_file = open("sw_result.txt","a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{device}:Timeout error"+"\n")
             swout_file.close()
+            pbar.update(1)
         except(AuthenticationException):
-            sw_out.append(device)
-            print(f"Error:{device}:Authenticacion error")
-            swout_file = open("sw_result.txt","a")
+            swout_file = open("sw_out.txt","a")
             swout_file.write(f"Error:{device}:Authenticacion error"+"\n")
             swout_file.close()
+            pbar.update(1)
+        except(OSError):
+            swout_file = open("sw_out.txt","a")
+            swout_file.write(f"Error:{device}:OS error"+"\n")
+            swout_file.close()
+            pbar.update(1)
     except(EOFError):
-        sw_out.append(device)
-        print(f"Error:{device}:EOF error")
-        swout_file = open("sw_result.txt","a")
+        swout_file = open("sw_out.txt","a")
         swout_file.write(f"Error:{device}:EOF error"+"\n")
         swout_file.close()
+        pbar.update(1)
+    except(OSError):
+        swout_file = open("sw_out.txt","a")
+        swout_file.write(f"Error:{device}:OS error"+"\n")
+        swout_file.close()
+        pbar.update(1)
+
+def l2data(user,pas,devices,l2df):
+
+    with tqdm(total=len(devices),desc="L2data") as pbar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            ejecucion = {executor.submit(connection,user,pas,device,l2df,pbar): device for device in devices}
+        for output in concurrent.futures.as_completed(ejecucion):
+            output.result()
