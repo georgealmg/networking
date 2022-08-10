@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
-# v1.0.7
+# v1.0.8
 
 import pandas as pd, os
-from bugapi import bugdata, Bdata, productnames
+from bugapi import bugdata, Bdata, products
 from datetime import datetime
 from devicedata import device_data, Ddata, ios, nxos, offline, offline_file
 from getpass import getuser
@@ -45,7 +45,7 @@ serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
-bugdata(devicesdf,header,productnames,productdf,Bdata)
+bugdata(devicesdf,header,products,Bdata)
 bugdf = pd.DataFrame(Bdata)
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.2
+#v1.0.3
 
 import requests
 from ratelimit import RateLimitException, limits
@@ -14,35 +14,30 @@ headers={"Content-Type": "application/x-www-form-urlencoded"},
 params={"client_id": "8e3ma3h3u7sfnmfn9h6nadky", "client_secret":"bqhyyPzsnjsVaW8PHcFw6TVh"})
 token = response.json()["token_type"] + " " + response.json()["access_token"]
 header = {"Authorization": token}
-productnames = {}
+products = {}
 Bdata = []
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def bugdata(devicesdf,header,productnames,productdf,Bdata):
+def bugdata(devicesdf,header,products,Bdata):
 
     for entry in devicesdf.values:
         try:
-            if entry[2] not in productnames.keys():
-                productnames[entry[2]] = {}
-                productnames[entry[2]]["versions"] = []
-                productnames[entry[2]]["versions"].append(entry[5])
-            elif entry[2] in productnames.keys() and entry[5] not in productnames[entry[2]]["versions"]:
-                productnames[entry[2]]["versions"].append(entry[5])
+            productid = entry[2]
+            version = entry[5]
+            if productid not in products.keys():
+                products[productid] = {}
+                products[productid]["versions"] = []
+                products[productid]["versions"].append(version)
+            elif productid in products.keys() and os not in products[productid]["versions"]:
+                products[productid]["versions"].append(version)
         except(KeyError):
             pass
 
-    for entry in productdf.values:
-        try:
-            productnames[entry[0]]["product_name"] = entry[4]
-        except(KeyError):
-            pass
-
-    with tqdm(total=len(productnames), desc="Extracting bug data") as pbar:
-        for id in productnames:
-            name = productnames[id]["product_name"]
-            for os in productnames[id]["versions"]:
-                url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{name}/affected_releases/{os}"
+    with tqdm(total=len(products), desc="Extracting bug data") as pbar:
+        for id in products.keys():
+            for os in products[id]["versions"]:
+                url = f"https://api.cisco.com/bug/v3.0/bugs/products/product_id/{id}"
                 response = requests.get(url, headers=header)
                 if response.status_code == 200:
                     bugpage1 = response.json()
@@ -54,11 +49,12 @@ def bugdata(devicesdf,header,productnames,productdf,Bdata):
                                 status = "Fixed"
                             elif entry["status"] == "T":
                                 status = "Terminated"
-                            Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
-                            ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
+                            if os in entry["known_affected_releases"]:
+                                Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
+                                ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
                         last_page = response.json()["pagination_response_record"]["last_index"]
                         for page in range(2,last_page+1):
-                            url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{name}/affected_releases/{os}?page_index="+ str(page)
+                            url = f"https://api.cisco.com/bug/v3.0/bugs/products/product_id/{id}?page_index="+ str(page)
                             response = requests.get(url, headers=header)
                             if response.status_code == 200:
                                 bug = response.json()
@@ -69,8 +65,9 @@ def bugdata(devicesdf,header,productnames,productdf,Bdata):
                                         status = "Fixed"
                                     elif entry["status"] == "T":
                                         status = "Terminated"
-                                    Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
-                                    ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
+                                    if os in entry["known_affected_releases"]:
+                                        Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
+                                        ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
                             elif response.status_code != 200:
                                 errorMessage = "HTTPError:"+str(response.status_code)
                                 Bdata.append({"product_id":id,"os_version":os,"bug_id":errorMessage,"headline":errorMessage,"severity":errorMessage,"status":errorMessage
