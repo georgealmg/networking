@@ -47,6 +47,7 @@ productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
 bugdata(devicesdf,header,products,Bdata)
 bugdf = pd.DataFrame(Bdata)
+bugdf["status"] = bugdf["status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
 psirtdata(devicesdf,header,osdict,OSdata)

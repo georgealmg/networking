@@ -40,15 +40,9 @@ def bugdata(devicesdf,header,products,Bdata):
                 url = f"https://api.cisco.com/bug/v3.0/bugs/products/product_id/{id}"
                 response = requests.get(url, headers=header)
                 if response.status_code == 200:
-                    bugpage1 = response.json()
-                    if bugpage1["bugs"] != []:
-                        for entry in bugpage1["bugs"]:
-                            if entry["status"] == "O":
-                                status = "Open"
-                            elif entry["status"] == "F":
-                                status = "Fixed"
-                            elif entry["status"] == "T":
-                                status = "Terminated"
+                    bug = response.json()
+                    if bug["bugs"] != []:
+                        for entry in bug["bugs"]:
                             if os in entry["known_affected_releases"]:
                                 Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
                                 ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
@@ -59,12 +53,6 @@ def bugdata(devicesdf,header,products,Bdata):
                             if response.status_code == 200:
                                 bug = response.json()
                                 for entry in bug["bugs"]:
-                                    if entry["status"] == "O":
-                                        status = "Open"
-                                    elif entry["status"] == "F":
-                                        status = "Fixed"
-                                    elif entry["status"] == "T":
-                                        status = "Terminated"
                                     if os in entry["known_affected_releases"]:
                                         Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
                                         ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
@@ -72,7 +60,7 @@ def bugdata(devicesdf,header,products,Bdata):
                                 errorMessage = "HTTPError:"+str(response.status_code)
                                 Bdata.append({"product_id":id,"os_version":os,"bug_id":errorMessage,"headline":errorMessage,"severity":errorMessage,"status":errorMessage
                                 ,"last_modified_date":errorMessage,"known_fixed_releases":errorMessage})
-                    elif bugpage1["bugs"] == []:
+                    elif bug["bugs"] == []:
                         Bdata.append({"product_id":id,"os_version":os,"bug_id":"no data","headline":"no data","severity":"no data","status":"no data"
                         ,"last_modified_date":"no data","known_fixed_releases":"no data"})
                 elif response.status_code != 200:
