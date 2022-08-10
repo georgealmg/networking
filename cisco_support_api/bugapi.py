@@ -29,7 +29,7 @@ def bugdata(devicesdf,header,products,Bdata):
                 products[productid] = {}
                 products[productid]["versions"] = []
                 products[productid]["versions"].append(version)
-            elif productid in products.keys() and os not in products[productid]["versions"]:
+            elif productid in products.keys() and version not in products[productid]["versions"]:
                 products[productid]["versions"].append(version)
         except(KeyError):
             pass
@@ -44,7 +44,7 @@ def bugdata(devicesdf,header,products,Bdata):
                     if bug["bugs"] != []:
                         for entry in bug["bugs"]:
                             if os in entry["known_affected_releases"]:
-                                Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
+                                Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":entry["status"]
                                 ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
                         last_page = response.json()["pagination_response_record"]["last_index"]
                         for page in range(2,last_page+1):
@@ -54,7 +54,7 @@ def bugdata(devicesdf,header,products,Bdata):
                                 bug = response.json()
                                 for entry in bug["bugs"]:
                                     if os in entry["known_affected_releases"]:
-                                        Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":status
+                                        Bdata.append({"product_id":id,"os_version":os,"bug_id":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":entry["status"]
                                         ,"last_modified_date":entry["last_modified_date"],"known_fixed_releases":entry["known_fixed_releases"]})
                             elif response.status_code != 200:
                                 errorMessage = "HTTPError:"+str(response.status_code)
