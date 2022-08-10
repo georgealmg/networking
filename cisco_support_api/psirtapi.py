@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-#v1.0.3
+#v1.0.4
 
-from pprint import pprint
 import requests
 from ratelimit import RateLimitException, limits
 from backoff import on_exception, expo
@@ -24,16 +23,18 @@ def psirtdata(devicesdf,header,osdict,OSdata):
 
     for entry in devicesdf.values:
         try:
-            if entry[4] not in osdict.keys():
-                osdict[entry[4]] = []
-                if entry[5] not in osdict[entry[4]]:
-                    osdict[entry[4]].append(entry[5])
-                elif entry[5] in osdict[entry[4]]:
+            os = entry[4]
+            version = entry[5]
+            if os not in osdict.keys():
+                osdict[os] = []
+                if version not in osdict[os]:
+                    osdict[os].append(version)
+                elif version in osdict[os]:
                     pass
-            elif entry[4] in osdict.keys():
-                if entry[5] not in osdict[entry[4]]:
-                    osdict[entry[4]].append(entry[5])
-                elif entry[5] in osdict[entry[4]]:
+            elif os in osdict.keys():
+                if version not in osdict[os]:
+                    osdict[os].append(version)
+                elif version in osdict[os]:
                     pass
         except(KeyError):
             pass
