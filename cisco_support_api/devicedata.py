@@ -31,7 +31,7 @@ def data(conn,sw):
             osVersion = devicedata["os_version"]
             osFamily = "nxos"
         Ddata.append({"Hostname":hostname,"IP":sw,"Model":model,
-        "SerialNumber":serialNumber,"OS":osFamily,"Version":osVersion})
+        "SerialNumber":serialNumber,"OSfamily":osFamily,"OSversion":osVersion})
 
     except(AttributeError):
         offline_file = open("offline.txt","a")
@@ -99,6 +99,6 @@ def device_data(devices,ios,nxos,offline,offline_file):
     with tqdm(total=len(devices), desc="Extracting device data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
             ejecucion = {executor.submit(connection,sw,ios,nxos,offline,offline_file): sw for sw in devices}
-        for output_ios in concurrent.futures.as_completed(ejecucion):
-            output_ios.result()
+        for output in concurrent.futures.as_completed(ejecucion):
+            output.result()
             pbar.update(1)

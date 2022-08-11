@@ -37,11 +37,11 @@ def eoxdata(header,productsid,Edata):
                     LastDateOfSupport = eox["LastDateOfSupport"]["value"]
                     EOXMigrationDetails = eox["EOXMigrationDetails"]["MigrationProductId"]
                     pass
-                Edata.append({"Productid":id,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSupport":LastDateOfSupport,
+                Edata.append({"ProductID":id,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSupport":LastDateOfSupport,
                 "EOXMigrationDetails":EOXMigrationDetails})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Edata.append({"Productid":id,"EndOfSaleDate":errorMessage,"LastDateOfSupport":errorMessage,
+                Edata.append({"ProductID":id,"EndOfSaleDate":errorMessage,"LastDateOfSupport":errorMessage,
                 "EOXMigrationDetails":errorMessage})
             pbar.update(1)
 
@@ -63,11 +63,11 @@ def softwaredata(header,productsid,SFdata):
                     RosVersion = "Validate"
                     SreleaseDate = "Validate"
                     imageName = "Validate"
-                SFdata.append({"Productid":id,"Version":RosVersion,"SoftwareReleaseDate":SreleaseDate,
+                SFdata.append({"ProductID":id,"Version":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                 "ImageName":imageName})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                SFdata.append({"Productid":id,"Version":errorMessage,"SoftwareReleaseDate":errorMessage,
+                SFdata.append({"ProductID":id,"Version":errorMessage,"SoftwareReleaseDate":errorMessage,
                 "ImageName":errorMessage})
             pbar.update(1)
 
@@ -89,7 +89,7 @@ def serialdata(header,serialnumbers,Sdata):
                     customer = "N/A"
                     contractEndDate = "N/A"
                     isCovered = "N/A"
-                Sdata.append({"Serial":number,"Customer":customer,
+                Sdata.append({"SerialNumber":number,"Customer":customer,
                 "ContractEndDate":contractEndDate,"IsCovered":isCovered})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
@@ -108,10 +108,10 @@ def productdata(header,productsid,Pdata):
             if response.status_code == 200:
                 product = response.json()["product_list"][0]
                 ProductReleaseDate = product["release_date"]
-                Pdata.append({"Productid":id,"ProductReleaseDate":ProductReleaseDate})
+                Pdata.append({"ProductID":id,"ProductReleaseDate":ProductReleaseDate})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Pdata.append({"Productid":id,"ProductReleaseDate":errorMessage})
+                Pdata.append({"ProductID":id,"ProductReleaseDate":errorMessage})
             pbar.update(1)
 
 def supportdata(devicesdf,header,supportdict):
