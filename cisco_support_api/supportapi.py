@@ -63,11 +63,11 @@ def softwaredata(header,productsid,SFdata):
                     RosVersion = "Validate"
                     SreleaseDate = "Validate"
                     imageName = "Validate"
-                SFdata.append({"ProductID":id,"Version":RosVersion,"SoftwareReleaseDate":SreleaseDate,
+                SFdata.append({"ProductID":id,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                 "ImageName":imageName})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                SFdata.append({"ProductID":id,"Version":errorMessage,"SoftwareReleaseDate":errorMessage,
+                SFdata.append({"ProductID":id,"RecommendedOSversion":errorMessage,"SoftwareReleaseDate":errorMessage,
                 "ImageName":errorMessage})
             pbar.update(1)
 
