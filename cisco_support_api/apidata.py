@@ -1,21 +1,20 @@
 # !/usr/bin/env python3
 # v1.0.8
 
-import pandas as pd, os
-from bugapi import bugdata, Bdata, products
+import pandas as pd, os, sqlalchemy as db
+from bugapi import bugdata, header, Bdata, products
 from datetime import datetime
 from devicedata import device_data, Ddata, ios, nxos, offline, offline_file
 from getpass import getuser
 from supportapi import supportdata, header, supportdict
 from psirtapi import psirtdata, header, osdict, OSdata
-from sqlalchemy import create_engine
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking/cisco_support_api")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
-engine = create_engine("mysql+pymysql://root:pr0gr4m@172.25.16.1/ciscoapi")
+engine = db.create_engine("mysql+pymysql://root:pr0gr4m@172.20.240.1/ciscoapi")
 conn = engine.connect()
 
 with open("ios.txt","r") as file:
@@ -45,9 +44,10 @@ serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
-bugdata(devicesdf,header,products,Bdata)
+bugdata(devicesdf,header,products,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
-bugdf["status"] = bugdf["status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
+bugdf["Status"] = bugdf["Status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
+bugdf["ProductSeries"] = bugdf["ProductSeries"].replace(regex={r"%20":" "})
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
 psirtdata(devicesdf,header,osdict,OSdata)

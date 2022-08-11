@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.4
+#v1.0.5
 
 import concurrent.futures, requests
 from ratelimit import RateLimitException, limits
@@ -19,62 +19,68 @@ Bdata = []
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def apicall(id,header,products,Bdata,pbar):
+def apicall(series,header,products,Bdata,pbar):
 
-    url = f"https://api.cisco.com/bug/v3.0/bugs/products/product_id/{id}"
-    response = requests.get(url, headers=header)
-    if response.status_code == 200:
-        bug = response.json()
-        if bug["bugs"] != []:
-            for entry in bug["bugs"]:
-                for os in products[id]["versions"]:
-                    if os in entry["known_affected_releases"]:
-                        Bdata.append({"ProductID":id,"OSversion":os,"BugID":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":entry["status"]
-                        ,"LastModifiedDate":entry["last_modified_date"],"KnownFixedReleases":entry["known_fixed_releases"]})
-                    elif os not in entry["known_affected_releases"]:
-                        pass
-            last_page = response.json()["pagination_response_record"]["last_index"]
-            for page in range(2,last_page+1):
-                url = f"https://api.cisco.com/bug/v3.0/bugs/products/product_id/{id}?page_index="+ str(page)
-                response = requests.get(url, headers=header)
-                if response.status_code == 200:
-                    bug = response.json()
-                    for entry in bug["bugs"]:
-                        for os in products[id]["versions"]:
-                            if os in entry["known_affected_releases"]:
-                                Bdata.append({"ProductID":id,"OSversion":os,"BugID":entry["bug_id"],"headline":entry["headline"],"severity":entry["severity"],"status":entry["status"]
-                                ,"LastModifiedDate":entry["last_modified_date"],"KnownFixedReleases":entry["known_fixed_releases"]})
-                            elif os not in entry["known_affected_releases"]:
-                                pass
-                elif response.status_code != 200:
-                    errorMessage = "HTTPError:"+str(response.status_code)
-                    Bdata.append({"ProductID":id,"OSversion":errorMessage,"BugID":errorMessage,"headline":errorMessage,"severity":errorMessage,"status":errorMessage
-                    ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
-    elif response.status_code != 200:
-        errorMessage = "HTTPError:"+str(response.status_code)
-        Bdata.append({"ProductID":id,"OSversion":errorMessage,"BugID":errorMessage,"headline":errorMessage,"severity":errorMessage,"status":errorMessage
-        ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
-
+    for os in products[series]["versions"]:
+        url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{series}/affected_releases/{os}"
+        response = requests.get(url, headers=header)
+        if response.status_code == 200:
+            bug = response.json()
+            if bug["bugs"] != []:
+                for entry in bug["bugs"]:
+                    Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":entry["bug_id"],"Headline":entry["headline"],"Severity":entry["severity"],
+                    "Status":entry["status"],"LastModifiedDate":entry["last_modified_date"],"KnownFixedReleases":entry["known_fixed_releases"]})
+                last_page = response.json()["pagination_response_record"]["last_index"]
+                for page in range(2,last_page+1):
+                    url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{series}/affected_releases/{os}?page_index="+ str(page)
+                    response = requests.get(url, headers=header)
+                    if response.status_code == 200:
+                        bug = response.json()
+                        for entry in bug["bugs"]:
+                            Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":entry["bug_id"],"Headline":entry["headline"],"Severity":entry["severity"],"Status":entry["status"]
+                            ,"LastModifiedDate":entry["last_modified_date"],"KnownFixedReleases":entry["known_fixed_releases"]})
+                    elif response.status_code != 200:
+                        errorMessage = "HTTPError:"+str(response.status_code)
+                        Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":errorMessage,"Headline":errorMessage,"Severity":errorMessage,"Status":errorMessage
+                        ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
+            elif bug["bugs"] == []:
+                Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":"N/A","Headline":"N/A","Severity":"N/A","Status":"N/A"
+                ,"LastModifiedDate":"N/A","KnownFixedReleases":"N/A"})
+        elif response.status_code != 200:
+            errorMessage = "HTTPError:"+str(response.status_code)
+            Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":errorMessage,"Headline":errorMessage,"Severity":errorMessage,"Status":errorMessage
+            ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
+        
     pbar.update(1)
 
-def bugdata(devicesdf,header,products,Bdata):
+def bugdata(devicesdf,header,products,productsdf,Bdata):
 
-    for entry in devicesdf.values:
-        try:
-            productid = entry[2]
-            version = entry[5]
-            if productid not in products.keys():
-                products[productid] = {}
-                products[productid]["versions"] = []
-                products[productid]["versions"].append(version)
-            elif productid in products.keys() and version not in products[productid]["versions"]:
-                products[productid]["versions"].append(version)
-        except(KeyError):
-            pass
+    for entry in productsdf.values:
+        productid = entry[0]
+        productseries = entry[2]
+        if productseries not in products.keys():
+            products[productseries] = {}
+            products[productseries]["versions"] = []
+            for entry in devicesdf.values:
+                try:
+                    productid_ = entry[2]
+                    version = entry[5]
+                    if productid == productid_ and version not in products[productseries]["versions"]:
+                        products[productseries]["versions"].append(version)
+                except(KeyError):
+                    pass
+        elif productseries in products.keys():
+            for entry in devicesdf.values:
+                try:
+                    productid_ = entry[2]
+                    version = entry[5]
+                    if productid == productid_ and version not in products[productseries]["versions"]:
+                        products[productseries]["versions"].append(version)
+                except(KeyError):
+                    pass
 
     with tqdm(total=len(products), desc="Extracting bug data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            ejecucion = {executor.submit(apicall,id,header,products,Bdata,pbar): id for id in products.keys()}
-        for output_ios in concurrent.futures.as_completed(ejecucion):
-            output_ios.result()
-            pbar.update(1)
+            ejecucion = {executor.submit(apicall,series,header,products,Bdata,pbar): series for series in products.keys()}
+        for output in concurrent.futures.as_completed(ejecucion):
+            output.result()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.4
+#v1.0.5
 
 import requests
 from ratelimit import RateLimitException, limits
@@ -108,10 +108,11 @@ def productdata(header,productsid,Pdata):
             if response.status_code == 200:
                 product = response.json()["product_list"][0]
                 ProductReleaseDate = product["release_date"]
-                Pdata.append({"ProductID":id,"ProductReleaseDate":ProductReleaseDate})
+                ProductSeries = product["product_series"].replace(" ","%20")
+                Pdata.append({"ProductID":id,"ProductReleaseDate":ProductReleaseDate,"ProductSeries":ProductSeries})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Pdata.append({"ProductID":id,"ProductReleaseDate":errorMessage})
+                Pdata.append({"ProductID":id,"ProductReleaseDate":errorMessage,"ProductSeries":errorMessage})
             pbar.update(1)
 
 def supportdata(devicesdf,header,supportdict):
