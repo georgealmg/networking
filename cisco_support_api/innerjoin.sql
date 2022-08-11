@@ -9,3 +9,12 @@ FROM
     eox ON devices.model = eox.Productid
         INNER JOIN
     software ON devices.model = software.Productid;
+    
+
+use ciscoapi;
+SELECT 
+    devices.*, products.ProductSeries
+FROM
+    devices
+        INNER JOIN
+    products ON devices.Model = products.ProductID;
