@@ -52,20 +52,20 @@ def psirtdata(devicesdf,header,osdict,OSdata):
                     if "errorCode" not in psirt.keys():
                         psirt = response.json()["advisories"]
                         for entry in psirt:
-                            OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
-                            ,"cwe":str(entry["cwe"]),"cveVersion":entry["version"],"status":entry["status"],"firstPublished":entry["firstPublished"],
-                            "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"affected_release":str(entry["iosRelease"]),"first_fixed":str(entry["firstFixed"])
+                            OSdata.append({"OSfamily":os,"OSversion":version,"BugID":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
+                            ,"cwe":str(entry["cwe"]),"status":entry["status"],"firstPublished":entry["firstPublished"],
+                            "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"firstFixed":str(entry["firstFixed"])
                             ,"url":entry["publicationUrl"]})
                     elif "errorCode" in psirt.keys():
-                            OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":"N/A","advisoryTitle":"N/A","cves":"N/A"
-                            ,"cwe":"N/A","cveVersion":"N/A","status":"N/A","firstPublished":"N/A",
-                            "lastUpdated":"N/A","severity":"N/A","affected_release":"N/A","first_fixed":"N/A"
+                            OSdata.append({"OSfamily":os,"OSversion":version,"BugID":"N/A","advisoryTitle":"N/A","cves":"N/A"
+                            ,"cwe":"N/A","status":"N/A","firstPublished":"N/A",
+                            "lastUpdated":"N/A","severity":"N/A","firstFixed":"N/A"
                             ,"url":"N/A"})
                 elif response.status_code != 200:
                     errorMessage = "HTTPError:"+str(response.status_code)
-                    OSdata.append({"OSfamily":os,"OSversion":version,"bug_id":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
-                    ,"cwe":errorMessage,"cveVersion":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
-                    "lastUpdated":errorMessage,"severity":errorMessage,"affected_release":errorMessage,"first_fixed":errorMessage
+                    OSdata.append({"OSfamily":os,"OSversion":version,"BugID":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
+                    ,"cwe":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
+                    "lastUpdated":errorMessage,"severity":errorMessage,"firstFixed":errorMessage
                     ,"url":errorMessage})
         
                 pbar.update(1)
