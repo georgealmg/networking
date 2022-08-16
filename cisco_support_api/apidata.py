@@ -6,6 +6,7 @@ from bugapi import bugdata, header, Bdata, products
 from datetime import datetime
 from devicedata import device_data, Ddata, ios, nxos, offline, offline_file
 from getpass import getuser
+from netifaces import gateways
 from supportapi import supportdata, header, supportdict
 from psirtapi import psirtdata, header, osdict, OSdata
 
@@ -14,7 +15,8 @@ try:
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
-engine = db.create_engine("mysql+pymysql://root:pr0gr4m@172.20.240.1/ciscoapi")
+gateway = gateways()["default"][2][0]
+engine = db.create_engine(f"mysql+pymysql://root:pr0gr4m@{gateway}/ciscoapi")
 conn = engine.connect()
 
 with open("ios.txt","r") as file:
