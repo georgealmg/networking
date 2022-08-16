@@ -52,7 +52,7 @@ bugdf["Status"] = bugdf["Status"].replace(to_replace={"O":"Open","F":"Fixed","T"
 bugdf["ProductSeries"] = bugdf["ProductSeries"].replace(regex={r"%20":" "})
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
-psirtdata(devicesdf,header,osdict,OSdata)
+psirtdata(devicesdf,osdict,OSdata)
 psirtdf = pd.DataFrame(OSdata)
 psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
 
