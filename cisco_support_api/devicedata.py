@@ -1,104 +1,60 @@
 #!/usr/bin/env python3
-#v1.0.1
+#v1.0.2
 
-import concurrent.futures, re, socket, time
-from getpass import getpass
-from napalm import get_network_driver
-from netmiko.ssh_exception import NetmikoTimeoutException, AuthenticationException
-from napalm.base.exceptions import ConnectionException
+import concurrent.futures, socket
 from tqdm import tqdm
+from unicon.core.errors import ConnectionError, TimeoutError
 
-user = input("Username: ")
-pas = getpass()
-ios,nxos,offline,Ddata = [],[],[],[]
+offline,Ddata = [],[]
 offline_file = open("offline.txt","w")
 offline_file.close()
 
-def data(conn,sw):
-    time.sleep(1.5)
-    conn.open()
-    devicedata = conn.get_facts()
-    hostname,serialNumber,model = devicedata["hostname"],devicedata["serial_number"],devicedata["model"]
+def data(conn):
+    output = conn.parse('show version')
     try:
-        if sw in ios:
-            osdata = re.search(r"(.+)(,)(\s)(Version )(.+)(,)(.+)",devicedata["os_version"])
-            osVersion = osdata.group(5)
-            if int(osVersion.split(".")[0]) >= 16:
-                osFamily = "iosxe"
-            else:
-                osFamily = "ios"
-        elif sw in nxos:
-            osVersion = devicedata["os_version"]
-            osFamily = "nxos"
-        Ddata.append({"Hostname":hostname,"IP":sw,"Model":model,
-        "SerialNumber":serialNumber,"OSfamily":osFamily,"OSversion":osVersion})
+        if "version" in output.keys():
+            hostname = output["version"]["hostname"]
+            model = output["version"]["chassis"]
+            serial = output["version"]["chassis_sn"]
+            os = output["version"]["os"]
+            version = output["version"]["version"]
+        elif "platform" in output.keys():
+            hostname = output["platform"]["hardware"]["device_name"]
+            model = output["platform"]["hardware"]["chassis"]
+            serial = output["platform"]["hardware"]["processor_board_id"]
+            os = output["platform"]["os"]
+            os = output["platform"]["system_version"]
+        Ddata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
+    except(KeyError):
+        pass
+    conn.disconnect()
 
-    except(AttributeError):
-        offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:AttributeError"+"\n")
-        offline_file.close()
-    except(ValueError):
-        offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:Couldn't get to enable mode"+"\n")
-        offline_file.close()
-    conn.close()
-
-def connection(sw,ios,nxos,offline,offline_file):
+def connection(device,offline,offline_file,tb):
     try:
-        if sw in ios:
-            driver = get_network_driver("ios")
-        elif sw  in nxos:
-            driver = get_network_driver("nxos_ssh")
-        conn = driver(hostname= sw,username= user, password= pas, optional_args= {"global_delay_factor": 6})
-        data(conn,sw)
-    except(ConnectionRefusedError, ConnectionResetError):
-        offline.append(sw)
+        conn = tb.devices[device]
+        conn.connect(log_stdout=False)
+        data(conn)
+    except(ConnectionError):
+        offline.append(device)
         offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
+        offline_file.write(f"Error:{device}:ConnectionRefused error"+"\n")
         offline_file.close()
     except(TimeoutError, socket.timeout):
-        offline.append(sw)
+        offline.append(device)
         offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:Timeout error"+"\n")
+        offline_file.write(f"Error:{device}:Timeout error"+"\n")
         offline_file.close()
-    except(AuthenticationException):
-        offline.append(sw)
-        offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:Authentication error"+"\n")
-        offline_file.close()
-    except(ConnectionException, NetmikoTimeoutException):
-        try:
-            driver = get_network_driver("ios")
-            conn = driver(hostname= sw,username= user, password= pas, optional_args= {"transport": 'telnet', "global_delay_factor": 6})
-            conn.open()
-            data(conn,sw)
-        except(ConnectionRefusedError, ConnectionResetError):
-            offline.append(sw)
-            offline_file = open("offline.txt","a")
-            offline_file.write(f"Error:{sw}:ConnectionRefused error"+"\n")
-            offline_file.close()
-        except(TimeoutError, socket.timeout):
-            offline.append(sw)
-            offline_file = open("offline.txt","a")
-            offline_file.write(f"Error:{sw}:Timeout error"+"\n")
-            offline_file.close()
-        except(AuthenticationException):
-            offline.append(sw)
-            offline_file = open("offline.txt","a")
-            offline_file.write(f"Error:{sw}:Authentication error"+"\n")
-            offline_file.close()
-    except(EOFError):
-        offline.append(sw)
-        offline_file = open("offline.txt","a")
-        offline_file.write(f"Error:{sw}:EOF error"+"\n")
-        offline_file.close()
+    # except(EOFError):
+    #     offline.append(device)
+    #     offline_file = open("offline.txt","a")
+    #     offline_file.write(f"Error:{device}:EOF error"+"\n")
+    #     offline_file.close()
 
-
-def device_data(devices,ios,nxos,offline,offline_file):
+def device_data(devices,offline,offline_file,tb):
 
     with tqdm(total=len(devices), desc="Extracting device data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
-            ejecucion = {executor.submit(connection,sw,ios,nxos,offline,offline_file): sw for sw in devices}
+            ejecucion = {executor.submit(connection,device,offline,offline_file,tb): device for device in devices}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()
             pbar.update(1)

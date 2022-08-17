@@ -1,11 +1,12 @@
 # !/usr/bin/env python3
-# v1.0.8
+# v1.0.9
 
 import pandas as pd, os, sqlalchemy as db
 from bugapi import bugdata, header, Bdata, products
 from datetime import datetime
-from devicedata import device_data, Ddata, ios, nxos, offline, offline_file
+from devicedata import device_data, Ddata, offline, offline_file
 from getpass import getuser
+from genie.testbed import load
 from netifaces import gateways
 from supportapi import supportdata, header, supportdict
 from psirtapi import psirtdata, header, osdict, OSdata
@@ -19,21 +20,16 @@ gateway = gateways()["default"][2][0]
 engine = db.create_engine(f"mysql+pymysql://root:pr0gr4m@{gateway}/ciscoapi")
 conn = engine.connect()
 
-with open("ios.txt","r") as file:
-    for ip in file:
-        ios.append(ip.strip("\n"))
-with open("nxos.txt","r") as file:
-    for ip in file:
-        nxos.append(ip.strip("\n"))
-devices = ios+nxos
-
+tb = load('devices.yml')
+devices = ["cc_hu930_cab01","cc_hu930_cab02","cc_hu930_sw1","cc_hu930_sw2","cc_hu930_sw3","cc_hu930_sw4","cc_hu930_sw5","cc_hu930_sw6"]
 total = len(devices)
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print(f"Hora de inicio: {tiempo_inicial}")
 
-device_data(devices,ios,nxos,offline,offline_file)
+device_data(devices,offline,offline_file,tb)
 devicesdf = pd.DataFrame(Ddata)
+devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe","NX-OS":"nxos"})
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
 supportdata(devicesdf,header,supportdict)
