@@ -2,4 +2,6 @@
 *.xlsx
 *.csv
 *.json
+*.yml
+*.yaml
 __pycache__
