@@ -1,27 +1,38 @@
 # !/usr/bin/env python3
-# v1.0.9
+# v1.0.10
 
 import pandas as pd, os, sqlalchemy as db
-from bugapi import bugdata, header, Bdata, products
+from acidevices import acidata, apics, ACIdata
+from bugapi import bugdata, Bdata, products
 from datetime import datetime
+from dnacdevices import dnacdata, DNACdata
+from dotenv import load_dotenv
 from devicedata import device_data, Ddata, offline, offline_file
 from getpass import getuser
 from genie.testbed import load
 from netifaces import gateways
-from supportapi import supportdata, header, supportdict
-from psirtapi import psirtdata, header, osdict, OSdata
+from sdwandevices import sdwdata, SDWdata
+from supportapi import supportdata, supportdict
+from psirtapi import psirtdata, osdict, OSdata
 
 try:
     os.chdir(f"/mnt/c/Users/{getuser()}/Documents/networking/cisco_support_api")
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
+load_dotenv("cisco_api_variable.env")
+env_vars = {}
+env_vars["user"] = os.environ["user"]
+env_vars["apic_pass"] = os.environ["apic_pass"] 
+env_vars["sdn_pass"] = os.environ["sdn_pass"]
+env_vars["client_id"] = os.env["client_id"]
+env_vars["client_secret"] = os.env["client_secret"]
 gateway = gateways()["default"][2][0]
 engine = db.create_engine(f"mysql+pymysql://root:pr0gr4m@{gateway}/ciscoapi")
 conn = engine.connect()
 
 tb = load('devices.yml')
-devices = ["cc_hu930_cab01","cc_hu930_cab02","cc_hu930_sw1","cc_hu930_sw2","cc_hu930_sw3","cc_hu930_sw4","cc_hu930_sw5","cc_hu930_sw6"]
+devices = [""]
 total = len(devices)
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
@@ -32,7 +43,20 @@ devicesdf = pd.DataFrame(Ddata)
 devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe","NX-OS":"nxos"})
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
-supportdata(devicesdf,header,supportdict)
+acidata(env_vars,apics,ACIdata)
+devicesdf = pd.DataFrame(ACIdata)
+devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+
+dnacdata(env_vars,DNACdata)
+devicesdf = pd.DataFrame(DNACdata)
+devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
+devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+
+sdwdata(env_vars,SDWdata)
+devicesdf = pd.DataFrame(SDWdata)
+devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+
+supportdata(env_vars,devicesdf,supportdict)
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
 eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
 softwaredf = pd.DataFrame(supportdict["softwaredata"])
@@ -42,13 +66,13 @@ serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 
-bugdata(devicesdf,header,products,productdf,Bdata)
+bugdata(env_vars,devicesdf,products,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
 bugdf["Status"] = bugdf["Status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
 bugdf["ProductSeries"] = bugdf["ProductSeries"].replace(regex={r"%20":" "})
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
-psirtdata(devicesdf,osdict,OSdata)
+psirtdata(env_vars,devicesdf,osdict,OSdata)
 psirtdf = pd.DataFrame(OSdata)
 psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
 
