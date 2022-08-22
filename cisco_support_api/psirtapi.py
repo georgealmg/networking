@@ -8,22 +8,14 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from tqdm import tqdm
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-url = "https://cloudsso.cisco.com/as/token.oauth2"
-response = requests.post(url, verify=False, data={"grant_type": "client_credentials"},
-headers={"Content-Type": "application/x-www-form-urlencoded"},
-params={"client_id": "8e3ma3h3u7sfnmfn9h6nadky", "client_secret":"bqhyyPzsnjsVaW8PHcFw6TVh"})
-token = response.json()["token_type"] + " " + response.json()["access_token"]
-header = {"Authorization": token}
-osdict = {}
-OSdata = []
+osdict,OSdata = [],{}
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def apicall(os,header,osdict,OSdata,pbar):
-
+def apicall(os,headers,osdict,OSdata,pbar):
     for version in osdict[os]:
         url = f"https://api.cisco.com/security/advisories/{os}?version={version}"
-        response = requests.get(url, headers=header)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             psirt = response.json()
             if "errorCode" not in psirt.keys():
@@ -47,12 +39,21 @@ def apicall(os,header,osdict,OSdata,pbar):
     
         pbar.update(1)
 
-def psirtdata(devicesdf,osdict,OSdata):
+def psirtdata(env_vars,devicesdf,osdict,OSdata):
+
+    client_id = env_vars["client_id"]
+    client_secret = env_vars["client_secret"]
+    url = "https://cloudsso.cisco.com/as/token.oauth2"
+    response = requests.post(url, verify=False, data={"grant_type": "client_credentials"},
+    headers={"Content-Type": "application/x-www-form-urlencoded"},
+    params={"client_id":client_id,"client_secret":client_secret})
+    token = response.json()["token_type"] + " " + response.json()["access_token"]
+    headers = {"Authorization": token}
 
     for entry in devicesdf.values:
         try:
-            os = entry[4]
-            version = entry[5]
+            os = entry[2]
+            version = entry[4]
             if os not in osdict.keys():
                 osdict[os] = []
                 if version not in osdict[os]:
@@ -73,6 +74,6 @@ def psirtdata(devicesdf,osdict,OSdata):
 
     with tqdm(total=total, desc="Extracting psirt data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            ejecucion = {executor.submit(apicall,os,header,osdict,OSdata,pbar): os for os in osdict.keys()}
+            ejecucion = {executor.submit(apicall,os,headers,osdict,OSdata,pbar): os for os in osdict.keys()}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()

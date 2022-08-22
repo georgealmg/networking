@@ -8,22 +8,14 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from tqdm import tqdm
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-url = "https://cloudsso.cisco.com/as/token.oauth2"
-response = requests.post(url, verify=False, data={"grant_type": "client_credentials"},
-headers={"Content-Type": "application/x-www-form-urlencoded"},
-params={"client_id": "8e3ma3h3u7sfnmfn9h6nadky", "client_secret":"bqhyyPzsnjsVaW8PHcFw6TVh"})
-token = response.json()["token_type"] + " " + response.json()["access_token"]
-header = {"Authorization": token}
-products = {}
-Bdata = []
+products,Bdata = {},[]
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def apicall(series,header,products,Bdata,pbar):
-
+def apicall(series,headers,products,Bdata,pbar):
     for os in products[series]["versions"]:
         url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{series}/affected_releases/{os}"
-        response = requests.get(url, headers=header)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             bug = response.json()
             if bug["bugs"] != []:
@@ -33,7 +25,7 @@ def apicall(series,header,products,Bdata,pbar):
                 last_page = response.json()["pagination_response_record"]["last_index"]
                 for page in range(2,last_page+1):
                     url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{series}/affected_releases/{os}?page_index="+ str(page)
-                    response = requests.get(url, headers=header)
+                    response = requests.get(url, headers=headers)
                     if response.status_code == 200:
                         bug = response.json()
                         for entry in bug["bugs"]:
@@ -53,8 +45,17 @@ def apicall(series,header,products,Bdata,pbar):
         
     pbar.update(1)
 
-def bugdata(devicesdf,header,products,productsdf,Bdata):
+def bugdata(env_vars,devicesdf,products,productsdf,Bdata):
 
+    client_id = env_vars["client_id"]
+    client_secret = env_vars["client_secret"]
+    url = "https://cloudsso.cisco.com/as/token.oauth2"
+    response = requests.post(url, verify=False, data={"grant_type": "client_credentials"},
+    headers={"Content-Type": "application/x-www-form-urlencoded"},
+    params={"client_id":client_id,"client_secret":client_secret})
+    token = response.json()["token_type"] + " " + response.json()["access_token"]
+    headers = {"Authorization": token}
+    
     for entry in productsdf.values:
         productid = entry[0]
         productseries = entry[2]
@@ -63,8 +64,8 @@ def bugdata(devicesdf,header,products,productsdf,Bdata):
             products[productseries]["versions"] = []
             for entry in devicesdf.values:
                 try:
-                    productid_ = entry[2]
-                    version = entry[5]
+                    productid_ = entry[1]
+                    version = entry[4]
                     if productid == productid_ and version not in products[productseries]["versions"]:
                         products[productseries]["versions"].append(version)
                 except(KeyError):
@@ -72,8 +73,8 @@ def bugdata(devicesdf,header,products,productsdf,Bdata):
         elif productseries in products.keys():
             for entry in devicesdf.values:
                 try:
-                    productid_ = entry[2]
-                    version = entry[5]
+                    productid_ = entry[1]
+                    version = entry[4]
                     if productid == productid_ and version not in products[productseries]["versions"]:
                         products[productseries]["versions"].append(version)
                 except(KeyError):
@@ -81,6 +82,6 @@ def bugdata(devicesdf,header,products,productsdf,Bdata):
 
     with tqdm(total=len(products), desc="Extracting bug data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            ejecucion = {executor.submit(apicall,series,header,products,Bdata,pbar): series for series in products.keys()}
+            ejecucion = {executor.submit(apicall,series,headers,products,Bdata,pbar): series for series in products.keys()}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()
