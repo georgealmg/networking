@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.2
+#v1.0.0
 
 import concurrent.futures, json, requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning

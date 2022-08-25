@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.2
+#v1.0.0
 
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import SSHException, AuthenticationException

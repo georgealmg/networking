@@ -1,20 +1,11 @@
 #!/usr/bin/ python3
-#v1.0.2
+#v1.0.0
 
-import concurrent.futures, os, socket
-from getpass import getuser
+import concurrent.futures, socket
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
 from tqdm import tqdm
-
-try:
-    os.chdir("C:/Python")
-except(FileNotFoundError):
-    try:
-        os.chdir(f"/mnt/c/Users/{getuser()}/Documents/Python")
-    except(FileNotFoundError):
-        os.chdir(os.getcwd())
 
 ios,nxos = [],[]
 l2df = []
