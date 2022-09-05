@@ -5,7 +5,7 @@ import concurrent.futures, csv, os, re, socket
 from datetime import datetime
 from getpass import getpass, getuser
 from netmiko import ConnectHandler
-from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
+from netmiko.exceptions import NetmikoTimeoutException, SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
 from pandas import read_csv
 

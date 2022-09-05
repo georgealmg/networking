@@ -5,7 +5,7 @@ import concurrent.futures, os, socket
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
-from netmiko.ssh_exception import SSHException, AuthenticationException
+from netmiko.exceptions import SSHException, AuthenticationException
 from tqdm import tqdm
 
 try:

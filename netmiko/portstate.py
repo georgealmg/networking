@@ -5,7 +5,7 @@ import concurrent.futures, os, pandas as pd, socket
 from getpass import getpass, getuser
 from datetime import datetime
 from netmiko import ConnectHandler
-from netmiko.ssh_exception import NetmikoTimeoutException, SSHException, AuthenticationException
+from netmiko.exceptions import NetmikoTimeoutException, SSHException, AuthenticationException
 from ntc_templates.parse import parse_output
 from tqdm import tqdm
 
