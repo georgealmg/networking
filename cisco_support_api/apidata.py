@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-# v1.0.10
+# v1.0.11
 
 import pandas as pd, os, sqlalchemy as db
 from acidevices import acidata, apics, ACIdata
@@ -23,10 +23,12 @@ except(FileNotFoundError):
 load_dotenv("cisco_api_variable.env")
 env_vars = {}
 env_vars["user"] = os.environ["user"]
-env_vars["apic_pass"] = os.environ["apic_pass"] 
 env_vars["sdn_pass"] = os.environ["sdn_pass"]
-env_vars["client_id"] = os.env["client_id"]
-env_vars["client_secret"] = os.env["client_secret"]
+env_vars["client_id"] = os.environ["client_id"]
+env_vars["client_secret"] = os.environ["client_secret"]
+env_vars["dnac"]  = os.environ["dnac"]
+env_vars["vmanage"] = os.environ["vmanage"]
+env_vars["apic1"] = os.environ["apic1"]
 gateway = gateways()["default"][2][0]
 engine = db.create_engine(f"mysql+pymysql://root:pr0gr4m@{gateway}/ciscoapi")
 conn = engine.connect()
@@ -40,7 +42,7 @@ print(f"Hora de inicio: {tiempo_inicial}")
 
 device_data(devices,offline,offline_file,tb)
 devicesdf = pd.DataFrame(Ddata)
-devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe","NX-OS":"nxos"})
+devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
 acidata(env_vars,apics,ACIdata)
@@ -81,5 +83,6 @@ total_out = len(offline)
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")
 tiempo_ejecucion = tiempo2 - tiempo1
-print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", f"Total de equipos validados: {str(total-total_out)}",
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", 
+f"Total de equipos validados: {str(total-total_out)}",
 f"Total de equipos fuera: {str(total_out)}",sep="\n")

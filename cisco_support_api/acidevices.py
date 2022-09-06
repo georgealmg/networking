@@ -54,7 +54,7 @@ def apic_devices(apic,headers,payload,ACIdata):
 def acidata(env_vars,apics,ACIdata):
 
     user = env_vars["user"]
-    pas = env_vars["apic_pass"]
+    pas = env_vars["sdn_pass"]
     apic1 = env_vars["apic1"]
     apics = [apic1]
     payload = json.dumps({"aaaUser": 
