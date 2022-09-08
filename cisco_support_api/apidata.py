@@ -43,6 +43,7 @@ total = len(devices)
 device_data(devices,offline,offline_file,tb)
 devicesdf = pd.DataFrame(Ddata)
 devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
+devicesdf["Model"] = devicesdf["Model"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-"})
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
 
 acidata(env_vars,apics,ACIdata)
