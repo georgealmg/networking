@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-# v1.0.0
+# v1.0.1
 
 import concurrent.futures, json, requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -65,7 +65,7 @@ def acidata(env_vars,apics,ACIdata):
     headers = {"Content-Type":"application/json"}
     with tqdm(total=len(apics),desc="Extracting APIC devices data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            ejecucion = {executor.submit(apic_devices,apic,user,pas,headers,payload,ACIdata): apic for apic in apics}
+            ejecucion = {executor.submit(apic_devices,apic,headers,payload,ACIdata): apic for apic in apics}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()
             pbar.update(1)
