@@ -33,13 +33,13 @@ gateway = gateways()["default"][2][0]
 engine = db.create_engine(f"mysql+pymysql://root:pr0gr4m@{gateway}/ciscoapi")
 conn = engine.connect()
 
-tb = load('devices.yml')
-devices = [""]
-total = len(devices)
 tiempo1 = datetime.now()
 tiempo_inicial = tiempo1.strftime("%H:%M:%S")
 print(f"Hora de inicio: {tiempo_inicial}")
 
+tb = load('devices.yml')
+devices = [""]
+total = len(devices)
 device_data(devices,offline,offline_file,tb)
 devicesdf = pd.DataFrame(Ddata)
 devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
