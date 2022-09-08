@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.5
+#v1.0.6
 
 import concurrent.futures, requests
 from ratelimit import RateLimitException, limits
@@ -8,7 +8,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from tqdm import tqdm
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-osdict,OSdata = [],{}
+osdict,OSdata = {},[]
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)

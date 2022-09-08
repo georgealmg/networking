@@ -23,7 +23,7 @@ def data(conn):
             model = output["platform"]["hardware"]["chassis"]
             serial = output["platform"]["hardware"]["processor_board_id"]
             os = output["platform"]["os"]
-            os = output["platform"]["system_version"]
+            version = output["platform"]["system_version"]
         Ddata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
     except(KeyError):
         pass
@@ -44,11 +44,6 @@ def connection(device,offline,offline_file,tb):
         offline_file = open("offline.txt","a")
         offline_file.write(f"Error:{device}:Timeout error"+"\n")
         offline_file.close()
-    # except(EOFError):
-    #     offline.append(device)
-    #     offline_file = open("offline.txt","a")
-    #     offline_file.write(f"Error:{device}:EOF error"+"\n")
-    #     offline_file.close()
 
 def device_data(devices,offline,offline_file,tb):
 
