@@ -48,17 +48,25 @@ def softwaredata(headers,productsid,SFdata):
             url = f"https://api.cisco.com/software/suggestion/v2/suggestions/software/productIds/{id}"
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
-                software = response.json()["productList"][0]["suggestions"][0]
-                if software["isSuggested"] == "Y":
-                    RosVersion = software["releaseFormat2"]
-                    SreleaseDate = software["releaseDate"]
-                    imageName = software["images"][0]["imageName"]
-                elif software["isSuggested"] == "N":
-                    RosVersion = "Validate"
-                    SreleaseDate = "Validate"
-                    imageName = "Validate"
-                SFdata.append({"ProductID":id,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
-                "ImageName":imageName})
+                software = response.json()["productList"]
+                for entry in software:
+                    try:
+                        if entry["suggestions"][0]["isSuggested"] == "Y":
+                            RosVersion = entry["suggestions"][0]["releaseFormat1"]
+                            SreleaseDate = entry["suggestions"][0]["releaseDate"]
+                            imageName = entry["suggestions"][0]["images"][0]["imageName"]
+                        elif entry["suggestions"][0]["isSuggested"] == "N":
+                            RosVersion = "Validate"
+                            SreleaseDate = "Validate"
+                            imageName = "Validate"
+                        SFdata.append({"ProductID":id,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
+                        "ImageName":imageName})
+                    except(KeyError,UnboundLocalError):
+                        RosVersion = "Validate"
+                        SreleaseDate = "Validate"
+                        imageName = "Validate"
+                        SFdata.append({"ProductID":id,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
+                        "ImageName":imageName})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
                 SFdata.append({"ProductID":id,"RecommendedOSversion":errorMessage,"SoftwareReleaseDate":errorMessage,
