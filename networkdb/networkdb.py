@@ -2,8 +2,9 @@
 # v1.0.0
 
 import os, pandas as pd, re
-from getpass import getpass, getuser
 from acidata import apics, headers, nodes, acidata
+from dotenv import load_dotenv
+from getpass import getuser
 from l3data import core, l3data
 from l2data import devices, l2data
 from dnsdata import recordstoignore, dnsdict, dnsdata
@@ -15,10 +16,11 @@ try:
 except(FileNotFoundError):
     os.chdir(os.getcwd())
 
-user = input("TACACS user: ")
-pas = getpass(prompt="TACACS password: ")
-dnsuser = input("Infoblox user: ")
-dnspas = getpass(prompt="Infoblox password: ")
+load_dotenv("networkdb.env")
+user = os.environ["user"]
+pas = os.environ["netpass"]
+dnsuser = os.environ["dnsuser"]
+dnspas = os.environ["dnspass"]
 
 # The ARP data, MAC and DNS (A records) will be stored in individual dataframes.
 
