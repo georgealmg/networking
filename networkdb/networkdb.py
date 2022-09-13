@@ -119,7 +119,6 @@ newdf = newdf.drop_duplicates(subset=["ip"], keep="first")
 # The end result is a Excel file that has the logical location of all endpoints in the DC network.
 
 writer = pd.ExcelWriter("networkdb.xlsx", engine='xlsxwriter')
-legacydf.to_excel(writer,sheet_name="Legacy",index=None,header=True,freeze_panes=(1,0))
 newdf.to_excel(writer,sheet_name="ACI",index=None,header=True,freeze_panes=(1,0))
 writer.save()
 print("Done")
