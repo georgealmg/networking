@@ -52,7 +52,7 @@ def psirtdata(env_vars,devicesdf,osdict,OSdata):
 
     for entry in devicesdf.values:
         try:
-            os = entry[2]
+            os = entry[3]
             version = entry[4]
             if os not in osdict.keys():
                 osdict[os] = []
