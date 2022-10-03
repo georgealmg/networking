@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#v1.0.6
+#v1.0.7
 
 import concurrent.futures, requests
 from ratelimit import RateLimitException, limits
@@ -21,10 +21,16 @@ def apicall(os,headers,osdict,OSdata,pbar):
             if "errorCode" not in psirt.keys():
                 psirt = response.json()["advisories"]
                 for entry in psirt:
-                    OSdata.append({"OSfamily":os,"OSversion":version,"BugID":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
-                    ,"cwe":str(entry["cwe"]),"status":entry["status"],"firstPublished":entry["firstPublished"],
-                    "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"firstFixed":str(entry["firstFixed"])
-                    ,"url":entry["publicationUrl"]})
+                    if "firstFixed" in entry.keys():
+                        OSdata.append({"OSfamily":os,"OSversion":version,"BugID":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
+                        ,"cwe":str(entry["cwe"]),"status":entry["status"],"firstPublished":entry["firstPublished"],
+                        "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"firstFixed":str(entry["firstFixed"])
+                        ,"url":entry["publicationUrl"]})
+                    elif "firstFixed" not in entry.keys():
+                        OSdata.append({"OSfamily":os,"OSversion":version,"BugID":str(entry["bugIDs"]),"advisoryTitle":entry["advisoryTitle"],"cves":str(entry["cves"])
+                        ,"cwe":str(entry["cwe"]),"status":entry["status"],"firstPublished":entry["firstPublished"],
+                        "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"firstFixed":entry["platforms"][0]["firstFixes"][0]["name"]
+                        ,"url":entry["publicationUrl"]})
             elif "errorCode" in psirt.keys():
                     OSdata.append({"OSfamily":os,"OSversion":version,"BugID":"N/A","advisoryTitle":"N/A","cves":"N/A"
                     ,"cwe":"N/A","status":"N/A","firstPublished":"N/A",
@@ -73,7 +79,7 @@ def psirtdata(env_vars,devicesdf,osdict,OSdata):
         total = total + len(osdict[os])
 
     with tqdm(total=total, desc="Extracting psirt data") as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             ejecucion = {executor.submit(apicall,os,headers,osdict,OSdata,pbar): os for os in osdict.keys()}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()
