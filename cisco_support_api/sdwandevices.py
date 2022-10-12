@@ -31,7 +31,7 @@ def sdw_devices(vmanage,headers,SDWdata):
             if version[2] != "0":
                 version[2] = version[2].lstrip("0")
             version = version[0]+"."+version[1]+"."+version[2]
-            SDWdata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
+            SDWdata.append({"Hostname":hostname,"ProductID":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
 
 def sdwdata(env_vars,SDWdata):
 

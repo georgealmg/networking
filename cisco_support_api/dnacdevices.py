@@ -20,7 +20,7 @@ def dnac_devices(dnac,headers,DNACdata):
             serial = serials[id].lstrip(" ")
             os = entry["softwareType"]
             version = entry["softwareVersion"]
-            DNACdata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
+            DNACdata.append({"Hostname":hostname,"ProductID":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
 
 def dnacdata(env_vars,DNACdata):
 

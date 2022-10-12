@@ -48,7 +48,7 @@ def apic_devices(apic,headers,payload,ACIdata):
             serial = entry["fabricNode"]["attributes"]["serial"]
             os = "aci"
             version = entry["fabricNode"]["attributes"]["version"].strip("n9000-")
-            ACIdata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
+            ACIdata.append({"Hostname":hostname,"ProductID":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
     pods.clear()
 
 def acidata(env_vars,apics,ACIdata):
