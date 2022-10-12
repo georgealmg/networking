@@ -14,17 +14,15 @@ def data(conn):
     try:
         if "version" in output.keys():
             hostname = output["version"]["hostname"]
-            model = output["version"]["chassis"]
             serial = output["version"]["chassis_sn"]
             os = output["version"]["os"]
             version = output["version"]["version"]
         elif "platform" in output.keys():
             hostname = output["platform"]["hardware"]["device_name"]
-            model = output["platform"]["hardware"]["chassis"]
             serial = output["platform"]["hardware"]["processor_board_id"]
             os = output["platform"]["os"]
             version = output["platform"]["system_version"]
-        Ddata.append({"Hostname":hostname,"Model":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
+        Ddata.append({"Hostname":hostname,"SerialNumber":serial,"OS":os,"OSVersion":version})
     except(KeyError):
         pass
     conn.disconnect()
