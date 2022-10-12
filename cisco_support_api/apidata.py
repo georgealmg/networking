@@ -12,7 +12,7 @@ from getpass import getuser
 from genie.testbed import load
 from netifaces import gateways
 from sdwandevices import sdwdata, SDWdata
-from supportapi import supportdata, supportdict
+from supportapi import supportdata, supportdict, productsid
 from psirtapi import psirtdata, osdict, OSdata
 
 try:
@@ -43,21 +43,20 @@ total = len(devices)
 device_data(devices,offline,offline_file,tb)
 devicesdf = pd.DataFrame(Ddata)
 devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
-devicesdf["Model"] = devicesdf["Model"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-"})
-devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="replace")
+# devicesdf["Model"] = devicesdf["Model"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-"})
 
 acidata(env_vars,apics,ACIdata)
-devicesdf = pd.DataFrame(ACIdata)
-devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+acidf = pd.DataFrame(ACIdata)
+acidf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 dnacdata(env_vars,DNACdata)
-devicesdf = pd.DataFrame(DNACdata)
-devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
-devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+dnacdf = pd.DataFrame(DNACdata)
+dnacdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
+dnacdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 sdwdata(env_vars,SDWdata)
-devicesdf = pd.DataFrame(SDWdata)
-devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+sdwdf = pd.DataFrame(SDWdata)
+sdwdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 supportdata(env_vars,devicesdf,supportdict)
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
@@ -68,6 +67,10 @@ serialdf = pd.DataFrame(supportdict["serialdata"])
 serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
+
+devicesdf["ProductID"] = productsid
+devicesdf[devicesdf["Hostname","ProductID","SerialNumber","OS","OSVersion"]]
+devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 bugdata(env_vars,devicesdf,products,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
