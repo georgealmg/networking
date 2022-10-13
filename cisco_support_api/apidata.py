@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-# v1.0.11
+# v1.0.12
 
 import pandas as pd, os, sqlalchemy as db
 from acidevices import acidata, apics, ACIdata
@@ -12,7 +12,7 @@ from getpass import getuser
 from genie.testbed import load
 from netifaces import gateways
 from sdwandevices import sdwdata, SDWdata
-from supportapi import supportdata, supportdict, productsid
+from supportapi import supportdata, supportdict
 from psirtapi import psirtdata, osdict, OSdata
 
 try:
@@ -41,36 +41,32 @@ tb = load('devices.yml')
 devices = [""]
 total = len(devices)
 device_data(devices,offline,offline_file,tb)
-devicesdf = pd.DataFrame(Ddata)
-devicesdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
-# devicesdf["Model"] = devicesdf["Model"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-"})
+standalonedf = pd.DataFrame(Ddata)
+standalonedf["OS"] = standalonedf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
+standalonedf["ProductID"] = standalonedf["ProductID"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-",
+"2801":"CISCO2801","2811":"CISCO2811","3825":"CISCO3825"})
 
 acidata(env_vars,apics,ACIdata)
 acidf = pd.DataFrame(ACIdata)
-acidf.to_sql('devices', con=engine ,index=False ,if_exists="append")
-
 dnacdata(env_vars,DNACdata)
 dnacdf = pd.DataFrame(DNACdata)
-dnacdf["OS"] = devicesdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
-dnacdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
-
+dnacdf["OS"] = dnacdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
 sdwdata(env_vars,SDWdata)
 sdwdf = pd.DataFrame(SDWdata)
-sdwdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+
+devicesdf = pd.read_sql("select * from devices where Enviroment = 'CM'",con=conn)
+devicesdf = pd.concat([standalonedf,acidf,dnacdf,sdwdf])
+devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 supportdata(env_vars,devicesdf,supportdict)
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
 eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
-softwaredf = pd.DataFrame(supportdict["softwaredata"])
-softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 serialdf = pd.DataFrame(supportdict["serialdata"])
 serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
-
-devicesdf["ProductID"] = productsid
-devicesdf[devicesdf["Hostname","ProductID","SerialNumber","OS","OSVersion"]]
-devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
+softwaredf = pd.DataFrame(supportdict["softwaredata"])
+softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 
 bugdata(env_vars,devicesdf,products,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
