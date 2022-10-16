@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#v1.0.5
 
 import concurrent.futures, requests
 from ratelimit import RateLimitException, limits

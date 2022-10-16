@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#v1.0.3
 
 import concurrent.futures, socket
 from tqdm import tqdm

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#v1.0.6
 
 import requests, numpy as np
 from ratelimit import RateLimitException, limits
@@ -39,8 +38,7 @@ def serialdata(headers,serialnumbers,Sdata):
 @limits(calls=5,period=1)
 def eoxdata(headers,productsid,Edata):
 
-    product_array = np.array(productsid)
-    product_array = np.array_split(product_array,(len(productsid)//20)+1)
+    product_array = np.array_split(productsid,(len(productsid)//20)+1)
     with tqdm(total=len(product_array), desc="Extracting eox data") as pbar:
         for entry in product_array:
             id = str(entry).replace("'","").replace(" ",",").replace("["," ").replace("]","").replace("\n","").replace(" ","")
@@ -59,8 +57,8 @@ def eoxdata(headers,productsid,Edata):
                         EndOfSaleDate =  record["EndOfSaleDate"]["value"]
                         LastDateOfSupport = record["LastDateOfSupport"]["value"]
                         EOXMigrationDetails = record["EOXMigrationDetails"]["MigrationProductId"]
-                Edata.append({"ProductID":product,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSupport":LastDateOfSupport,
-                "EOXMigrationDetails":EOXMigrationDetails})
+                    Edata.append({"ProductID":product,"EndOfSaleDate":EndOfSaleDate,"LastDateOfSupport":LastDateOfSupport,
+                    "EOXMigrationDetails":EOXMigrationDetails})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
                 Edata.append({"ProductID":id,"EndOfSaleDate":errorMessage,"LastDateOfSupport":errorMessage,
@@ -71,8 +69,7 @@ def eoxdata(headers,productsid,Edata):
 @limits(calls=10,period=1)
 def productdata(headers,productsid,Pdata):
 
-    product_array = np.array(productsid)
-    product_array = np.array_split(product_array,(len(productsid)//5)+1)
+    product_array = np.array_split(productsid,(len(productsid)//5)+1)
     with tqdm(total=len(product_array), desc="Extracting product data") as pbar:
         for entry in product_array:
             id = str(entry).replace("'","").replace(" ",",").replace("["," ").replace("]","").replace("\n","").replace(" ","")
@@ -93,15 +90,11 @@ def productdata(headers,productsid,Pdata):
 @limits(calls=10,period=1)
 def softwaredata(headers,productsid,SFdata):
 
-    product_array = np.array(productsid)
-    product_array = np.array_split(product_array,(len(productsid)//10)+1)
+    product_array = np.array_split(productsid,(len(productsid)//10)+1)
     with tqdm(total=len(product_array), desc="Extracting software data") as pbar:
         for entry in product_array:
-            print(entry)
             id = str(entry).replace("'","").replace(" ",",").replace("["," ").replace("]","").replace("\n","").replace(" ","")
-            print(id)
             url = f"https://api.cisco.com/software/suggestion/v2/suggestions/software/productIds/{id}"
-            print(url)
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 software = response.json()["productList"]
@@ -113,16 +106,16 @@ def softwaredata(headers,productsid,SFdata):
                                 RosVersion = subrecord["releaseFormat1"]
                                 SreleaseDate = subrecord["releaseDate"]
                                 imageName = subrecord["images"][0]["imageName"]
-                            elif subrecord["isSuggested"] == "N":
-                                RosVersion = "Validate"
-                                SreleaseDate = "Validate"
-                                imageName = "Validate"
+                            elif subrecord["isSuggested"] == "":
+                                RosVersion = "N/A"
+                                SreleaseDate = "N/A"
+                                imageName = "N/A"
                             SFdata.append({"ProductID":product,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                             "ImageName":imageName})
                     except(KeyError,UnboundLocalError):
-                        RosVersion = "Validate"
-                        SreleaseDate = "Validate"
-                        imageName = "Validate"
+                        RosVersion = "N/A"
+                        SreleaseDate = "N/A"
+                        imageName = "N/A"
                         SFdata.append({"ProductID":product,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                         "ImageName":imageName})
             elif response.status_code != 200:
@@ -143,7 +136,7 @@ def supportdata(env_vars,devicesdf,supportdict):
     headers = {"Authorization": token}
 
     serialnumbers = devicesdf["SerialNumber"].values
-    productsid = list(devicesdf["ProductID"].unique)
+    productsid = devicesdf["ProductID"].unique()
 
     serialdata(headers,serialnumbers,Sdata)
     eoxdata(headers,productsid,Edata)
