@@ -1,5 +1,6 @@
 # !/usr/bin/env python3
-# v1.0.12
+
+# DROP network modules data
 
 import pandas as pd, os, sqlalchemy as db
 from acidevices import acidata, apics, ACIdata
@@ -58,16 +59,18 @@ devicesdf = pd.read_sql("select * from devices where Enviroment = 'CM'",con=conn
 devicesdf = pd.concat([standalonedf,acidf,dnacdf,sdwdf])
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
+# devicesdf = pd.read_sql("select * from devices",con=conn)
 supportdata(env_vars,devicesdf,supportdict)
-eoxdf = pd.DataFrame(supportdict["eoxdata"])
-eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
 serialdf = pd.DataFrame(supportdict["serialdata"])
 serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
+eoxdf = pd.DataFrame(supportdict["eoxdata"])
+eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 softwaredf = pd.DataFrame(supportdict["softwaredata"])
 softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 
+# productdf = pd.read_sql("select * from products",con=conn)
 bugdata(env_vars,devicesdf,products,productdf,Bdata)
 bugdf = pd.DataFrame(Bdata)
 bugdf["Status"] = bugdf["Status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
