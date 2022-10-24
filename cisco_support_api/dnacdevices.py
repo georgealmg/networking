@@ -14,7 +14,7 @@ def dnac_devices(dnac,headers,DNACdata):
         serials = entry["serialNumber"].split(",")
         models = entry["platformId"].split(",")
         for id in range(0,len(serials)):
-            hostname = entry["hostname"].strip(".bch.bancodechile.cl")
+            hostname = entry["hostname"]
             model = models[id].lstrip(" ")
             serial = serials[id].lstrip(" ")
             os = entry["softwareType"]
