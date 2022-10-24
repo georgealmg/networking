@@ -55,7 +55,6 @@ dnacdf["OS"] = dnacdf["OS"].replace(to_replace={"IOS-XE":"iosxe"})
 sdwdata(env_vars,SDWdata)
 sdwdf = pd.DataFrame(SDWdata)
 
-devicesdf = pd.read_sql("select * from devices where Enviroment = 'CM'",con=conn)
 devicesdf = pd.concat([standalonedf,acidf,dnacdf,sdwdf])
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
