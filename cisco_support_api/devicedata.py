@@ -29,7 +29,7 @@ def data(conn):
             model = output["platform"]["hardware"]["chassis"]
             serial = output["platform"]["hardware"]["processor_board_id"]
             os = output["platform"]["os"]
-            version = output["platform"]["system_version"]
+            version = output["platform"]["software"]["system_version"]
         Ddata.append({"Hostname":hostname,"ProductID":model,"SerialNumber":serial,"OS":os,"OSVersion":version})
     except(KeyError):
         pass
