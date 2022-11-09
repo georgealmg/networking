@@ -40,12 +40,11 @@ print(f"Hora de inicio: {tiempo_inicial}")
 
 tb = load('devices.yml')
 devices = [""]
-total = len(devices)
 device_data(devices,offline,offline_file,tb)
 standalonedf = pd.DataFrame(Ddata)
 standalonedf["OS"] = standalonedf["OS"].replace(to_replace={"IOS":"ios","IOS-XE":"iosxe","NX-OS":"nxos"})
 standalonedf["ProductID"] = standalonedf["ProductID"].replace(regex={r"Nexus9\d+\s":"N9K-",r"Nexus7\d+\s":"N7K-",r"Nexus5\d+\s":"N5K-",
-"2801":"CISCO2801","2811":"CISCO2811","3825":"CISCO3825"})
+"1841":"CISCO1841","2851":"CISCO2851","2801":"CISCO2801","2811":"CISCO2811","3825":"CISCO3825"})
 
 acidata(env_vars,apics,ACIdata)
 acidf = pd.DataFrame(ACIdata)
@@ -61,12 +60,16 @@ devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 # devicesdf = pd.read_sql("select * from devices",con=conn)
 supportdata(env_vars,devicesdf,supportdict)
 serialdf = pd.DataFrame(supportdict["serialdata"])
+serialdf["ProductID"] = serialdf["ProductID"].str.strip(" ")
 serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
+eoxdf["ProductID"] = eoxdf["ProductID"].str.strip(" ")
 eoxdf.to_sql('eox', con=engine ,index=False ,if_exists="replace")
 productdf = pd.DataFrame(supportdict["productdata"])
+productdf["ProductID"] = productdf["ProductID"].str.strip(" ")
 productdf.to_sql('products', con=engine ,index=False ,if_exists="replace")
 softwaredf = pd.DataFrame(supportdict["softwaredata"])
+softwaredf["ProductID"] = softwaredf["ProductID"].str.strip(" ")
 softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 
 # productdf = pd.read_sql("select * from products",con=conn)
@@ -81,10 +84,7 @@ psirtdf = pd.DataFrame(OSdata)
 psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
 
 conn.close()
-total_out = len(offline)
 tiempo2 = datetime.now()
 tiempo_final = tiempo2.strftime("%H:%M:%S")
 tiempo_ejecucion = tiempo2 - tiempo1
-print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}", 
-f"Total de equipos validados: {str(total-total_out)}",
-f"Total de equipos fuera: {str(total_out)}",sep="\n")
+print(f"Hora de finalizacion: {tiempo_final}", f"Tiempo de ejecucion: {tiempo_ejecucion}",sep="\n")
