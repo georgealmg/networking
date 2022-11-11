@@ -11,7 +11,7 @@ products,Bdata = {},[]
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def apicall(series,headers,products,Bdata,pbar):
+def apicall(series,headers,products,Bdata,pbar,errors):
     for os in products[series]["versions"]:
         url = f"https://api.cisco.com/bug/v3.0/bugs/product_series/{series}/affected_releases/{os}"
         response = requests.get(url, headers=headers)
@@ -32,19 +32,17 @@ def apicall(series,headers,products,Bdata,pbar):
                             ,"LastModifiedDate":entry["last_modified_date"],"KnownFixedReleases":entry["known_fixed_releases"]})
                     elif response.status_code != 200:
                         errorMessage = "HTTPError:"+str(response.status_code)
-                        Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":errorMessage,"Headline":errorMessage,"Severity":errorMessage,"Status":errorMessage
-                        ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
+                        errors.append({"API":"Bug","id":series+os,"Error":errorMessage})
             elif bug["bugs"] == []:
-                Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":"N/A","Headline":"N/A","Severity":"N/A","Status":"N/A"
-                ,"LastModifiedDate":"N/A","KnownFixedReleases":"N/A"})
+                Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":None,"Headline":None,"Severity":None,"Status":None
+                ,"LastModifiedDate":None,"KnownFixedReleases":None})
         elif response.status_code != 200:
             errorMessage = "HTTPError:"+str(response.status_code)
-            Bdata.append({"ProductSeries":series,"OSversion":os,"BugID":errorMessage,"Headline":errorMessage,"Severity":errorMessage,"Status":errorMessage
-            ,"LastModifiedDate":errorMessage,"KnownFixedReleases":errorMessage})
+            errors.append({"API":"Bug","id":series+os,"Error":errorMessage})
         
     pbar.update(1)
 
-def bugdata(env_vars,devicesdf,products,productsdf,Bdata):
+def bugdata(env_vars,devicesdf,products,productsdf,Bdata,errors):
 
     client_id = env_vars["client_id"]
     client_secret = env_vars["client_secret"]
@@ -81,6 +79,6 @@ def bugdata(env_vars,devicesdf,products,productsdf,Bdata):
 
     with tqdm(total=len(products), desc="Extracting bug data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            ejecucion = {executor.submit(apicall,series,headers,products,Bdata,pbar): series for series in products.keys()}
+            ejecucion = {executor.submit(apicall,series,headers,products,Bdata,pbar,errors): series for series in products.keys()}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()

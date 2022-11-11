@@ -11,7 +11,7 @@ osdict,OSdata = {},[]
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def apicall(os,headers,osdict,OSdata,pbar):
+def apicall(os,headers,osdict,OSdata,pbar,errors):
     for version in osdict[os]:
         url = f"https://api.cisco.com/security/advisories/{os}?version={version}"
         response = requests.get(url, headers=headers)
@@ -31,20 +31,17 @@ def apicall(os,headers,osdict,OSdata,pbar):
                         "lastUpdated":entry["lastUpdated"],"severity":entry["sir"],"firstFixed":entry["platforms"][0]["firstFixes"][0]["name"]
                         ,"url":entry["publicationUrl"]})
             elif "errorCode" in psirt.keys():
-                    OSdata.append({"OSfamily":os,"OSversion":version,"BugID":"N/A","advisoryTitle":"N/A","cves":"N/A"
-                    ,"cwe":"N/A","status":"N/A","firstPublished":"N/A",
-                    "lastUpdated":"N/A","severity":"N/A","firstFixed":"N/A"
-                    ,"url":"N/A"})
+                    OSdata.append({"OSfamily":os,"OSversion":version,"BugID":None,"advisoryTitle":None,"cves":None
+                    ,"cwe":None,"status":None,"firstPublished":None,
+                    "lastUpdated":None,"severity":None,"firstFixed":None
+                    ,"url":None})
         elif response.status_code != 200:
             errorMessage = "HTTPError:"+str(response.status_code)
-            OSdata.append({"OSfamily":os,"OSversion":version,"BugID":errorMessage,"advisoryTitle":errorMessage,"cves":errorMessage
-            ,"cwe":errorMessage,"status":errorMessage,"firstPublished":errorMessage,
-            "lastUpdated":errorMessage,"severity":errorMessage,"firstFixed":errorMessage
-            ,"url":errorMessage})
+            errors.append({"API":"Bug","id":version+os,"Error":errorMessage})
     
         pbar.update(1)
 
-def psirtdata(env_vars,devicesdf,osdict,OSdata):
+def psirtdata(env_vars,devicesdf,osdict,OSdata,errors):
 
     client_id = env_vars["client_id"]
     client_secret = env_vars["client_secret"]
@@ -79,6 +76,6 @@ def psirtdata(env_vars,devicesdf,osdict,OSdata):
 
     with tqdm(total=total, desc="Extracting psirt data") as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            ejecucion = {executor.submit(apicall,os,headers,osdict,OSdata,pbar): os for os in osdict.keys()}
+            ejecucion = {executor.submit(apicall,os,headers,osdict,OSdata,pbar,errors): os for os in osdict.keys()}
         for output in concurrent.futures.as_completed(ejecucion):
             output.result()

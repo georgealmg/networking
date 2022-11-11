@@ -12,7 +12,7 @@ supportdict = {}
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=5,period=1)
-def serialdata(headers,serialnumbers,Sdata):
+def serialdata(headers,serialnumbers,Sdata,errors):
 
     serial_array = np.array_split(serialnumbers,(len(serialnumbers)//50)+1)
     with tqdm(total=len(serial_array), desc="Extracting serial data") as pbar:
@@ -30,13 +30,12 @@ def serialdata(headers,serialnumbers,Sdata):
                     "ContractEndDate":contractEndDate,"IsCovered":isCovered})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Sdata.append({"SerialNumber":number,"Customer":errorMessage,
-                "ContractEndDate":errorMessage,"IsCovered":errorMessage})
+                errors.append({"API":"Serial","id":number,"Error":errorMessage})
             pbar.update(1)
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=5,period=1)
-def eoxdata(headers,productsid,Edata):
+def eoxdata(headers,productsid,Edata,errors):
 
     product_array = np.array_split(productsid,(len(productsid)//20)+1)
     with tqdm(total=len(product_array), desc="Extracting eox data") as pbar:
@@ -49,9 +48,9 @@ def eoxdata(headers,productsid,Edata):
                     if "EOXError" in record.keys():
                         if "does not exist" in record["EOXError"]["ErrorDescription"]:
                             product = record["EOXInputValue"]
-                            EndOfSaleDate = "N/A"
-                            LastDateOfSupport = "N/A"
-                            EOXMigrationDetails = "N/A"
+                            EndOfSaleDate = None
+                            LastDateOfSupport = None
+                            EOXMigrationDetails = None
                     elif "EOXError" not in record.keys():
                         product = record["EOXInputValue"]
                         EndOfSaleDate =  record["EndOfSaleDate"]["value"]
@@ -61,13 +60,12 @@ def eoxdata(headers,productsid,Edata):
                     "EOXMigrationDetails":EOXMigrationDetails})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Edata.append({"ProductID":id,"EndOfSaleDate":errorMessage,"LastDateOfSupport":errorMessage,
-                "EOXMigrationDetails":errorMessage})
+                errors.append({"API":"Eox","id":id,"Error":errorMessage})
             pbar.update(1)
 
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def productdata(headers,productsid,Pdata):
+def productdata(headers,productsid,Pdata,errors):
 
     product_array = np.array_split(productsid,(len(productsid)//5)+1)
     with tqdm(total=len(product_array), desc="Extracting product data") as pbar:
@@ -83,12 +81,12 @@ def productdata(headers,productsid,Pdata):
                     Pdata.append({"ProductID":product,"ProductReleaseDate":ProductReleaseDate,"ProductSeries":ProductSeries})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                Pdata.append({"ProductID":id,"ProductReleaseDate":errorMessage,"ProductSeries":errorMessage})
+                errors.append({"API":"Product","id":id,"Error":errorMessage})
             pbar.update(1)
     
 @on_exception(expo,RateLimitException,max_tries=5)
 @limits(calls=10,period=1)
-def softwaredata(headers,productsid,SFdata):
+def softwaredata(headers,productsid,SFdata,errors):
 
     product_array = np.array_split(productsid,(len(productsid)//10)+1)
     with tqdm(total=len(product_array), desc="Extracting software data") as pbar:
@@ -107,24 +105,23 @@ def softwaredata(headers,productsid,SFdata):
                                 SreleaseDate = subrecord["releaseDate"]
                                 imageName = subrecord["images"][0]["imageName"]
                             elif subrecord["isSuggested"] == "":
-                                RosVersion = "N/A"
-                                SreleaseDate = "N/A"
-                                imageName = "N/A"
+                                RosVersion = None
+                                SreleaseDate = None
+                                imageName = None
                             SFdata.append({"ProductID":product,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                             "ImageName":imageName})
                     except(KeyError,UnboundLocalError):
-                        RosVersion = "N/A"
-                        SreleaseDate = "N/A"
-                        imageName = "N/A"
+                        RosVersion = None
+                        SreleaseDate = None
+                        imageName = None
                         SFdata.append({"ProductID":product,"RecommendedOSversion":RosVersion,"SoftwareReleaseDate":SreleaseDate,
                         "ImageName":imageName})
             elif response.status_code != 200:
                 errorMessage = "HTTPError:"+str(response.status_code)
-                SFdata.append({"ProductID":id,"RecommendedOSversion":errorMessage,"SoftwareReleaseDate":errorMessage,
-                "ImageName":errorMessage})
+                errors.append({"API":"Software","id":id,"Error":errorMessage})
             pbar.update(1)
 
-def supportdata(env_vars,devicesdf,supportdict):
+def supportdata(env_vars,devicesdf,supportdict,errors):
 
     client_id = env_vars["client_id"]
     client_secret = env_vars["client_secret"]
@@ -138,10 +135,10 @@ def supportdata(env_vars,devicesdf,supportdict):
     serialnumbers = devicesdf["SerialNumber"].values
     productsid = devicesdf["ProductID"].unique()
 
-    serialdata(headers,serialnumbers,Sdata)
-    eoxdata(headers,productsid,Edata)
-    softwaredata(headers,productsid,SFdata)
-    productdata(headers,productsid,Pdata)
+    serialdata(headers,serialnumbers,Sdata,errors)
+    eoxdata(headers,productsid,Edata,errors)
+    softwaredata(headers,productsid,SFdata,errors)
+    productdata(headers,productsid,Pdata,errors)
     
     supportdict["eoxdata"] = Edata
     supportdict["softwaredata"] = SFdata

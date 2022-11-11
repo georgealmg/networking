@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from devicedata import device_data, Ddata, offline, offline_file
 from getpass import getuser
 from genie.testbed import load
+from sqlalchemy.exc import ProgrammingError as alchemyerror
+from pymysql.err import ProgrammingError as mysqlerror
 from netifaces import gateways
 from sdwandevices import sdwdata, SDWdata
 from supportapi import supportdata, supportdict
@@ -58,9 +60,10 @@ devicesdf = pd.concat([standalonedf,acidf,dnacdf,sdwdf])
 devicesdf.to_sql('devices', con=engine ,index=False ,if_exists="append")
 
 # devicesdf = pd.read_sql("select * from devices",con=conn)
-supportdata(env_vars,devicesdf,supportdict)
+errors = []
+supportdata(env_vars,devicesdf,supportdict,errors)
 serialdf = pd.DataFrame(supportdict["serialdata"])
-serialdf["ProductID"] = serialdf["ProductID"].str.strip(" ")
+serialdf["SerialNumber"] = serialdf["SerialNumber"].str.strip(" ")
 serialdf.to_sql('serialnumbers', con=engine ,index=False ,if_exists="replace")
 eoxdf = pd.DataFrame(supportdict["eoxdata"])
 eoxdf["ProductID"] = eoxdf["ProductID"].str.strip(" ")
@@ -73,15 +76,21 @@ softwaredf["ProductID"] = softwaredf["ProductID"].str.strip(" ")
 softwaredf.to_sql('software', con=engine ,index=False ,if_exists="replace")
 
 # productdf = pd.read_sql("select * from products",con=conn)
-bugdata(env_vars,devicesdf,products,productdf,Bdata)
+bugdata(env_vars,devicesdf,products,productdf,Bdata,errors)
 bugdf = pd.DataFrame(Bdata)
 bugdf["Status"] = bugdf["Status"].replace(to_replace={"O":"Open","F":"Fixed","T":"Terminated"})
 bugdf["ProductSeries"] = bugdf["ProductSeries"].replace(regex={r"%20":" "})
 bugdf.to_sql('bugs', con=engine ,index=False ,if_exists="replace")
 
-psirtdata(env_vars,devicesdf,osdict,OSdata)
+psirtdata(env_vars,devicesdf,osdict,OSdata,errors)
 psirtdf = pd.DataFrame(OSdata)
 psirtdf.to_sql('psirt', con=engine ,index=False ,if_exists="replace")
+
+errorsdf = pd.DataFrame(errors)
+try:
+    errorsdf.to_sql('errors', con=engine ,index=False ,if_exists="replace")
+except(alchemyerror,mysqlerror,TypeError):
+    pass
 
 conn.close()
 tiempo2 = datetime.now()
