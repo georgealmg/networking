@@ -1,39 +1,32 @@
 use ciscoapi;
 
-alter table devices modify column IP varchar(15);
-alter table devices modify column SerialNumber varchar(20);
-alter table devices modify column OSFamily varchar(5);
-alter table devices modify column OSversion varchar(10);
+alter table devices modify Hostname not null;
+alter table devices modify ProductID varchar(20) not null;
+alter table devices modify SerialNumber varchar(20) not null;
+alter table devices modify OSFamily varchar(5) not null;
+alter table devices modify OSversion varchar(25) not null;
 
-alter table eox modify column EndOfSaleDate date;
-alter table eox modify column LastDateOfSupport date;
 
-alter table products modify column ProductReleaseDate date;
+alter table eox modify ProductID varchar(20) not null;
+alter table eox modify EndOfSaleDate date null;
+alter table eox modify LastDateOfSupport date null;
+alter table eox modify EOXMigrationDetails varchar(20) null;
 
-alter table software modify column SoftwareReleaseDate date;
 
-CREATE TABLE IF NOT EXISTS bugs (
-    ProductID TEXT,
-    OSversion TEXT,
-    BugID TEXT,
-    headline MEDIUMTEXT,
-    severity INT,
-    status VARCHAR(9),
-    LastModifiedDate DATE,
-    KnownFixedReleases TEXT
-);
+alter table products modify ProductID varchar(20) not null;
+alter table products modify ProductReleaseDate date not null;
+alter table products modify ProductSeries not null;
 
-CREATE TABLE IF NOT EXISTS psirt (
-    OSfamily VARCHAR(5),
-    OSversion TEXT,
-    BugID TEXT,
-    advisoryTitle MEDIUMTEXT,
-    cves MEDIUMTEXT,
-    cwe TEXT,
-    status VARCHAR(9),
-    firstPublished DATE,
-    lastUpdated DATE,
-    severity VARCHAR(9),
-    first_fixed TEXT,
-    url MEDIUMTEXT
-);
+
+alter table software modify ProductID varchar(20) not null;
+alter table software modify RecommendedOSversion not null;
+alter table software modify SoftwareReleaseDate date not null;
+alter table software modify ImageName not null;
+
+
+alter table serialnumbers modify ProductID varchar(20) not null;
+alter table serialnumbers modify Customer not null;
+alter table serialnumbers modify ContractEndDate date;
+alter table serialnumbers modify IsCovered varchar(3) not null;
+
+
