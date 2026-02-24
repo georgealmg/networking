@@ -1,0 +1,56 @@
+---
+
+- name: Query endpoints (Infoblox)
+  hosts: infoblox
+  gather_facts: false
+  vars:
+    ip_macs: {}
+  tasks:
+
+    - name: Read ipaddresses csv file
+      read_csv:
+        path: ipaddresses.csv
+      register: data
+      delegate_to: localhost
+
+    - name: Subtask (Infoblox)
+      include_tasks: infoblox_getmacs.yml
+      loop: "{{data.list}}"
+
+- name: Query endpoints (DNAC)
+  hosts: catalyst_center
+  gather_facts: false
+  vars:
+    result: []
+  tasks:
+
+    - name: Get token
+      uri: 
+        url: https://{{ ansible_host }}/dna/system/api/v1/auth/token
+        headers:
+          Accept: "application/json"
+          Content-Type: "application/json"
+        method: POST
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        force_basic_auth: true
+        return_content: true
+        validate_certs: false
+      register: dnacresponse
+      delegate_to: localhost
+
+    - name: Save token to variable
+      set_fact:
+        token: "{{ dnacresponse.json.Token }}"
+      delegate_to: localhost
+  
+    - name: Subtask - Tracker
+      include_tasks: dnac_endpoint_tracker.yml
+      loop: "{{hostvars['cdv_info_01']['ip_macs'] | dict2items}}"
+
+    - name: Print result
+      debug:
+        msg: "{{ result }}"
+      delegate_to: localhost
+
+...
