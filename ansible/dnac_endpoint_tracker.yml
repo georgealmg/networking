@@ -1,0 +1,53 @@
+---
+- name: Get device location
+  uri: 
+    url: https://{{ ansible_host }}/dna/intent/api/v1/client-detail?macAddress={{item.value.mac}}
+    headers:
+      Accept: "application/json"
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token }}"
+    method: GET
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    force_basic_auth: true
+    return_content: true
+    validate_certs: false
+  register: dnacresponse
+  delegate_to: localhost
+
+- name: Set factos
+  set_fact:
+    user_id: "{{ dnacresponse.json.detail.userId }}"
+    hostname: "{{ dnacresponse.json.detail.hostName }}"
+    host_os: "{{ dnacresponse.json.detail.hostOs }}"
+    location: "{{ dnacresponse.json.detail.location }}"
+    networkdevice: "{{ dnacresponse.json.detail.clientConnection }}"
+    network_port: "{{ dnacresponse.json.detail.port }}"
+  delegate_to: localhost
+  when: "'response' not in dnacresponse.json"
+
+- name: Change port to wireless
+  set_fact:
+    network_port: "Wireless"
+  when: ('response' not in dnacresponse.json) and ('_AP0' in networkdevice or '_CM' in networkdevice)
+  delegate_to: localhost
+
+- name: Change user_id if null
+  set_fact:
+    user_id: "---"
+  when: ('response' not in dnacresponse.json) and (user_id is none)
+  delegate_to: localhost
+
+- name: Change host_os if null
+  set_fact:
+    host_os: "---"
+  when: ('response' not in dnacresponse.json) and (host_os is none)
+  delegate_to: localhost
+
+- name: Save data
+  set_fact:
+    result: "{{ result + [{ 'hostname':hostname, 'ip':item.key , 'switch':networkdevice+'_'+network_port, 'nube':location, 'tipo':host_os, 'user':user_id }] }}"
+  delegate_to: localhost
+  when: "'response' not in dnacresponse.json"
+  
+...
