@@ -1,0 +1,22 @@
+---
+
+- name: Get MAC address (Infoblox)
+  uri: 
+    url: https://{{ ansible_host }}/wapi/v2.12/lease?address={{item['IP']}}&_return_fields=hardware
+    headers:
+      Accept: "application/json"
+      Content-Type: "application/json"
+    method: GET
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    force_basic_auth: true
+    return_content: true
+    validate_certs: false
+  register: ipresponse
+  delegate_to: localhost
+
+- name: Save to ip_macs dict
+  set_fact:
+    ip_macs: "{{ ip_macs | combine( { item['IP']: {'mac':ipresponse.json[0].hardware}} ) }}"
+
+...
