@@ -1,0 +1,96 @@
+---
+
+- name: Get endpoint location
+  hosts: ise
+  connection: local
+  gather_facts: false
+  vars:
+    macs: ["00:00:74:DC:03:03", "00:00:74:DC:03:03"]
+    results_bounce: []
+    results_auth: []
+  tasks:
+
+    - name: Uppercase MACs
+      set_fact:
+        upper_macs: "{{ macs | map('upper') | list }}"
+
+    - name: Port bounce
+      uri: 
+        url: "https://{{ ansible_host }}/admin/API/mnt/CoA/Disconnect/CDV-ISE-PSN02-S1/{{ item }}/1"
+        headers:
+          Accept: "Application/xml"
+        method: GET
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        force_basic_auth: true
+        return_content: true
+        validate_certs: false
+      register: response
+      delegate_to: localhost
+      loop: "{{ upper_macs }}"
+      ignore_errors: true
+
+    - name: Extraer data de XML
+      xml: 
+        xmlstring: "{{ item.content }}"
+        xpath: //results
+        content: text
+      register: element
+      delegate_to: localhost
+      loop: "{{ response.results }}"
+      when: "'CLIENT_ERROR' not in item.content"
+      ignore_errors: true
+    
+    - name: Gather responses
+      set_fact:
+        results_bounce:  "{{ results_bounce + [ { 'mac':item.item.item, 'result_bounce':item.matches.0.results } ] }}"
+      loop: "{{ element.results }}"
+      when: "'matches' in item"
+      ignore_errors: true
+
+    - name: Pause for 1 minute
+      pause:
+        minutes: 1
+
+    - name: Auth status
+      uri: 
+        url: "https://{{ ansible_host }}/admin/API/mnt/AuthStatus/MACAddress/{{ item.mac }}/1200/1/All"
+        headers:
+          Accept: "Application/xml"
+        method: GET
+        user: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        force_basic_auth: true
+        return_content: true
+        validate_certs: false
+      register: response
+      delegate_to: localhost
+      loop: "{{ results_bounce }}"
+      ignore_errors: true
+
+    - name: Extraer data de XML
+      xml: 
+        xmlstring: "{{ item.content }}"
+        xpath: //passed
+        content: text
+      register: element
+      delegate_to: localhost
+      loop: "{{ response.results }}"
+      when: "'calling_station_id' in item.content"
+      ignore_errors: true
+  
+    - name: Gather responses
+      set_fact:
+        results_auth:  "{{ results_auth + [ { 'mac':item.item.item.mac, 'result_bounce':item.item.item.result_bounce ,'result_auth':item.matches.0.passed } ] }}"
+      loop: "{{ element.results }}"
+      when: "'matches' in item"
+      ignore_errors: true
+
+    - name: Print results
+      debug:
+        msg: 
+          - "Direccion MAC: {{ item.mac }}"
+          - "Resultado de reinicio de puerta: {{ item.result_bounce | replace('true','exitoso') | replace('false','fallido') }}"
+          - "Resultado de autenticacion de equipo: {{ item.result_auth | replace('true','exitoso') | replace('false','fallido') }}"
+      loop: "{{ results_auth }}"
+...
